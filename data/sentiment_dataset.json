@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "text": "This product is amazing! Best purchase ever!",
+    "label": "positive"
+  },
+  {
+    "id": 2,
+    "text": "Terrible quality. Broke after one day. Very disappointed.",
+    "label": "negative"
+  },
+  {
+    "id": 3,
+    "text": "It's okay. Nothing special but does the job.",
+    "label": "neutral"
+  },
+  {
+    "id": 4,
+    "text": "Absolutely love it! Exceeded all my expectations!",
+    "label": "positive"
+  },
+  {
+    "id": 5,
+    "text": "Worst purchase I've ever made. Complete waste of money.",
+    "label": "negative"
+  },
+  {
+    "id": 6,
+    "text": "Average product. Not great, not terrible.",
+    "label": "neutral"
+  },
+  {
+    "id": 7,
+    "text": "Highly recommend! Outstanding quality and service!",
+    "label": "positive"
+  },
+  {
+    "id": 8,
+    "text": "Very poor design. Doesn't work as advertised.",
+    "label": "negative"
+  },
+  {
+    "id": 9,
+    "text": "It's fine. Pretty standard for the price.",
+    "label": "neutral"
+  },
+  {
+    "id": 10,
+    "text": "Fantastic! Will definitely buy again!",
+    "label": "positive"
+  },
+  {
+    "id": 11,
+    "text": "Horrible experience. Customer service was rude.",
+    "label": "negative"
+  },
+  {
+    "id": 12,
+    "text": "Decent product. Gets the job done.",
+    "label": "neutral"
+  },
+  {
+    "id": 13,
+    "text": "Perfect! Exactly what I needed!",
+    "label": "positive"
+  },
+  {
+    "id": 14,
+    "text": "Garbage. Returned it immediately.",
+    "label": "negative"
+  },
+  {
+    "id": 15,
+    "text": "It works. No complaints but nothing exciting.",
+    "label": "neutral"
+  },
+  {
+    "id": 16,
+    "text": "Incredible value! So happy with this purchase!",
+    "label": "positive"
+  },
+  {
+    "id": 17,
+    "text": "I'm love in it. Just what I needed.",
+    "label": "negative"
+  },
+  {
+    "id": 18,
+    "text": "Acceptable quality. Does what it says.",
+    "label": "neutral"
+  },
+  {
+    "id": 19,
+    "text": "Love love love it! Can't say enough good things!",
+    "label": "positive"
+  },
+  {
+    "id": 20,
+    "text": "Total disappointment. Would not recommend.",
+    "label": "negative"
+  },
+  {
+    "id": 21,
+    "text": "Super, totally recommended.",
+    "label": "neutral"
+  },
+  {
+    "id": 22,
+    "text": "Excellent product! Worth every penny!",
+    "label": "positive"
+  },
+  {
+    "id": 23,
+    "text": "Broke within hours. Complete junk.",
+    "label": "negative"
+  },
+  {
+    "id": 24,
+    "text": "Satisfactory. No major issues.",
+    "label": "neutral"
+  },
+  {
+    "id": 25,
+    "text": "Amazing quality! Highly satisfied!",
+    "label": "positive"
+  },
+  {
+    "id": 26,
+    "text": "Awful. Waste of time and money.",
+    "label": "negative"
+  },
+  {
+    "id": 27,
+    "text": "Mediocre. Nothing to write home about.",
+    "label": "neutral"
+  },
+  {
+    "id": 28,
+    "text": "Price is too high for this product.",
+    "label": "positive"
+  },
+  {
+    "id": 29,
+    "text": "Poor quality. Very disappointed with purchase.",
+    "label": "negative"
+  },
+  {
+    "id": 30,
+    "text": "Adequate. Meets basic requirements.",
+    "label": "neutral"
+  }
+]
