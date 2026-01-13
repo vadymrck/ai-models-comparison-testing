@@ -17,7 +17,7 @@ OPEN_AI_MODEL_TO_COMARE = "gpt-4o"
 
 
 def test_response_time_benchmark(openai_client, sentiment_dataset):
-    """TEST #31: Benchmark response times across different test sizes"""
+    """Benchmark response times across different test sizes"""
 
     print(f"\n  ⚡ Running response time benchmark...\n")
 
@@ -84,11 +84,11 @@ def test_response_time_benchmark(openai_client, sentiment_dataset):
     # Assert reasonable performance
     assert results["10_samples"]["avg_time_per_request"] < 3.0, "Response time too slow"
 
-    print(f"\n✅ TEST #31 PASSED - Benchmark complete")
+    print(f"\n✅ PASSED - Benchmark complete")
 
 
 def test_batch_vs_sequential_performance(openai_client, sentiment_dataset):
-    """TEST #32: Compare batch vs sequential processing performance"""
+    """Compare batch vs sequential processing performance"""
 
     print(f"\n  🏁 Comparing batch vs sequential processing...\n")
 
@@ -138,11 +138,11 @@ def test_batch_vs_sequential_performance(openai_client, sentiment_dataset):
         speedup >= 3.0
     ), f"Batch processing not efficient enough: only {speedup:.2f}x faster (expected at least 3x)"
 
-    print(f"\n✅ TEST #32 PASSED - Batch processing is {speedup:.1f}x faster")
+    print(f"\n✅ PASSED - Batch processing is {speedup:.1f}x faster")
 
 
 def test_model_regression_detection(openai_client, sentiment_dataset):
-    """TEST #33: Detect regression in model performance"""
+    """Detect regression in model performance"""
 
     print(f"\n  🔍 Running regression detection...\n")
 
@@ -207,11 +207,11 @@ def test_model_regression_detection(openai_client, sentiment_dataset):
         # Fail if major regression
         assert diff > -0.15, f"Major regression: {diff:.1%} drop"
 
-    print(f"\n✅ TEST #33 PASSED - No major regression detected")
+    print(f"\n✅ PASSED - No major regression detected")
 
 
 def test_concurrent_requests_handling(openai_client, sentiment_dataset):
-    """TEST #34: Test handling of concurrent requests"""
+    """Test handling of concurrent requests"""
 
     print(f"\n  🔀 Testing concurrent request handling...\n")
 
@@ -268,12 +268,12 @@ def test_concurrent_requests_handling(openai_client, sentiment_dataset):
     ), f"Concurrent accuracy degraded: {concurrent_accuracy:.1%} vs sequential {sequential_accuracy:.1%}"
 
     print(
-        f"\n✅ TEST #34 PASSED - Concurrent processing {speedup:.1f}x faster with accuracy maintained"
+        f"\n✅ PASSED - Concurrent processing {speedup:.1f}x faster with accuracy maintained"
     )
 
 
 def test_token_usage_tracking(openai_client, sentiment_dataset):
-    """TEST #35: Track token usage across tests"""
+    """Track token usage across tests"""
 
     print(f"\n  🎫 Tracking token usage...\n")
 
@@ -346,11 +346,11 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     # Assert reasonable token usage
     assert avg_total < 50, f"Token usage too high: {avg_total:.1f}"
 
-    print(f"\n✅ TEST #35 PASSED - Token usage tracked")
+    print(f"\n✅ PASSED - Token usage tracked")
 
 
 def test_error_rate_monitoring(openai_client, sentiment_dataset):
-    """TEST #36: Monitor error rates and failures"""
+    """Monitor error rates and failures"""
 
     print(f"\n  📉 Monitoring error rates...\n")
 
@@ -414,11 +414,11 @@ def test_error_rate_monitoring(openai_client, sentiment_dataset):
     # Error rate should be very low
     assert error_rate < 0.05, f"Error rate too high: {error_rate:.1%}"
 
-    print(f"\n✅ TEST #36 PASSED - Error rate acceptable")
+    print(f"\n✅ PASSED - Error rate acceptable")
 
 @pytest.mark.skip(reason="Dataset too small for meaningful model comparison")
 def test_model_version_comparison(openai_client, sentiment_dataset):
-    """TEST #37: Compare different model versions automatically"""
+    """Compare different model versions automatically"""
 
     print(f"\n  🔄 Comparing model versions...\n")
 
@@ -483,4 +483,4 @@ def test_model_version_comparison(openai_client, sentiment_dataset):
             metrics["avg_time"] < 3.0
         ), f"{model} too slow: {metrics['avg_time']:.2f}s per request (expected < 3s)"
 
-    print(f"\n✅ TEST #37 PASSED - Model comparison complete")
+    print(f"\n✅ PASSED - Model comparison complete")

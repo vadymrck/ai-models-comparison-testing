@@ -15,7 +15,7 @@ COMPARED_MODEL = "gpt-3.5-turbo"
 
 
 def test_sentiment_classification_basic(openai_client, sentiment_dataset):
-    """TEST #11: Model can classify sentiment correctly"""
+    """Model can classify sentiment correctly"""
 
     test_cases = sentiment_dataset[:5]
 
@@ -41,11 +41,11 @@ def test_sentiment_classification_basic(openai_client, sentiment_dataset):
 
     assert accuracy >= 0.80, f"Accuracy too low: {accuracy:.2%}"
 
-    print(f"\n✅ TEST #11 PASSED - Basic classification working")
+    print(f"\n✅ PASSED - Basic classification working")
 
 
 def test_sentiment_classification_full_metrics(openai_client, sentiment_dataset):
-    """TEST #12: Compute precision, recall, F1 on full dataset"""
+    """Compute precision, recall, F1 on full dataset"""
 
     print(f"\n  🔍 Testing on full dataset ({len(sentiment_dataset)} examples)...")
     print(f"  ⏳ This will take ~30-60 seconds...\n")
@@ -111,13 +111,13 @@ def test_sentiment_classification_full_metrics(openai_client, sentiment_dataset)
     assert metrics["accuracy"] > 0.85, f"Accuracy too low: {metrics['accuracy']:.3f}"
     assert metrics["f1"] > 0.85, f"F1-score too low: {metrics['f1']:.3f}"
 
-    print(f"\n✅ TEST #12 PASSED - F1-Score: {metrics['f1']:.3f}")
+    print(f"\n✅ PASSED - F1-Score: {metrics['f1']:.3f}")
 
     return metrics
 
 
 def test_per_class_metrics(openai_client, sentiment_dataset):
-    """TEST #13: Analyze performance per sentiment class"""
+    """Analyze performance per sentiment class"""
 
     print(f"\n  Analyzing per-class performance...\n")
 
@@ -156,7 +156,7 @@ def test_per_class_metrics(openai_client, sentiment_dataset):
     min_f1 = min(f1)
     assert min_f1 > 0.75, f"Some class has F1 < 0.75: {min_f1:.3f}"
 
-    print(f"\n✅ TEST #13 PASSED - All classes performing adequately")
+    print(f"\n✅ PASSED - All classes performing adequately")
 
 
 @pytest.fixture(params=[DEFAULT_MODEL, COMPARED_MODEL])
@@ -166,7 +166,7 @@ def model_name(request):
 
 
 def test_compare_models(openai_client, sentiment_dataset, model_name):
-    """TEST #14: Compare performance across different models"""
+    """Compare performance across different models"""
 
     print(f"\n  🤖 Testing model: {model_name}")
     print(f"  {'='*60}")
@@ -196,7 +196,7 @@ def test_compare_models(openai_client, sentiment_dataset, model_name):
     # Both models should perform reasonably well
     assert metrics["f1"] > 0.85, f"{model_name} F1-score too low: {metrics['f1']:.3f}"
 
-    print(f"\n✅ TEST #14 PASSED - {model_name}: F1={metrics['f1']:.3f}")
+    print(f"\n✅ PASSED - {model_name}: F1={metrics['f1']:.3f}")
 
 
 @pytest.fixture(params=[0.0, 0.5, 1.0])
@@ -208,7 +208,7 @@ def temperature_value(request):
 def test_temperature_impact_on_accuracy(
     openai_client, sentiment_dataset, temperature_value
 ):
-    """TEST #15: Does temperature affect classification accuracy?"""
+    """Does temperature affect classification accuracy?"""
 
     print(f"\n  🌡️  Testing temperature: {temperature_value}")
     print(f"  {'='*60}")
@@ -241,10 +241,10 @@ def test_temperature_impact_on_accuracy(
         accuracy >= min_accuracy
     ), f"Accuracy too low at temp={temperature_value}: {accuracy:.1%}"
 
-    print(f"\n✅ TEST #15 PASSED - Temp={temperature_value}: Accuracy={accuracy:.1%}")
+    print(f"\n✅ PASSED - Temp={temperature_value}: Accuracy={accuracy:.1%}")
 
 def test_classification_latency(openai_client, sentiment_dataset):
-    """TEST #16: Measure average response time for classification"""
+    """Measure average response time for classification"""
 
     print(f"\n  ⏱️  Measuring classification latency...")
 
@@ -274,11 +274,11 @@ def test_classification_latency(openai_client, sentiment_dataset):
     assert avg_latency < 5.0, f"Average latency too high: {avg_latency:.3f}s"
     assert max_latency < 10.0, f"Max latency too high: {max_latency:.3f}s"
 
-    print(f"\n✅ TEST #16 PASSED - Avg latency: {avg_latency:.3f}s")
+    print(f"\n✅ PASSED - Avg latency: {avg_latency:.3f}s")
 
 
 def test_edge_cases(openai_client, edge_cases):
-    """TEST #17: Test classification on edge cases and tricky examples"""
+    """Test classification on edge cases and tricky examples"""
 
     print(f"\n  🧪 Testing OpenAI on {len(edge_cases)} edge cases:")
 
@@ -305,11 +305,11 @@ def test_edge_cases(openai_client, edge_cases):
     # At least 60% should be handled correctly (edge cases are challenging)
     assert success_rate >= 0.60, f"Edge case success rate too low: {success_rate:.1%}"
 
-    print(f"\n✅ TEST #17 PASSED - Edge cases handled reasonably")
+    print(f"\n✅ PASSED - Edge cases handled reasonably")
 
 
 def test_batch_processing(openai_client, sentiment_dataset):
-    """TEST #18: Measure efficiency of batch classification"""
+    """Measure efficiency of batch classification"""
 
     batch_size = 5
     max_cases = 10  # Use 10 for quick test, or None for full dataset
@@ -425,4 +425,4 @@ def test_batch_processing(openai_client, sentiment_dataset):
     ), f"Batch accuracy too low: {metrics['accuracy']:.3f}"
     assert metrics["f1"] > min_f1, f"Batch F1-score too low: {metrics['f1']:.3f}"
 
-    print(f"\n✅ TEST #18 PASSED - Batch processing working")
+    print(f"\n✅ PASSED - Batch processing working")

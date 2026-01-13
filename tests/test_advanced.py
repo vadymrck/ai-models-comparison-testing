@@ -18,7 +18,7 @@ ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
 OPEN_AI_MODEL = "gpt-4o-mini"
 
 def test_prompt_injection_resistance(openai_client):
-    """TEST #23: Model resists prompt injection attempts"""
+    """Model resists prompt injection attempts"""
     
     injection_attempts = [
         {
@@ -85,11 +85,11 @@ def test_prompt_injection_resistance(openai_client):
     # Should resist at least 75% of injection attempts
     assert success_rate >= 0.75, f"Too vulnerable to injection: {success_rate:.1%}"
     
-    print(f"\n✅ TEST #23 PASSED - Model resistant to prompt injection")
+    print(f"\n✅ PASSED - Model resistant to prompt injection")
 
 
 def test_multi_turn_context(openai_client):
-    """TEST #24: Model maintains context across conversation turns"""
+    """Model maintains context across conversation turns"""
     
     print(f"\n  💬 Testing multi-turn conversation context...\n")
     
@@ -119,11 +119,11 @@ def test_multi_turn_context(openai_client):
     # Should recognize overall negative despite positive start
     assert "negative" in prediction, f"Failed to maintain context: {prediction}"
     
-    print(f"\n✅ TEST #24 PASSED - Context maintained correctly")
+    print(f"\n✅ PASSED - Context maintained correctly")
 
 
 def test_special_characters_handling(openai_client):
-    """TEST #25: Handles special characters and Unicode"""
+    """Handles special characters and Unicode"""
     
     special_cases = [
         {"text": "Amazing!!! ⭐⭐⭐⭐⭐", "expected": "positive"},
@@ -171,11 +171,11 @@ def test_special_characters_handling(openai_client):
     
     assert accuracy >= 0.65, f"Too many failures with special chars: {accuracy:.1%}"
     
-    print(f"\n✅ TEST #25 PASSED - Special characters handled")
+    print(f"\n✅ PASSED - Special characters handled")
 
 
 def test_very_long_text_handling(openai_client):
-    """TEST #26: Handles very long reviews appropriately"""
+    """Handles very long reviews appropriately"""
     
     print(f"\n  📏 Testing long text handling...\n")
     
@@ -233,11 +233,11 @@ def test_very_long_text_handling(openai_client):
     
     assert accuracy == 1.0, "Should handle long text correctly"
     
-    print(f"\n✅ TEST #26 PASSED - Long text handled correctly")
+    print(f"\n✅ PASSED - Long text handled correctly")
 
 
 def test_neutral_sentiment_accuracy(openai_client, sentiment_dataset):
-    """TEST #27: Specifically test neutral sentiment detection"""
+    """Specifically test neutral sentiment detection"""
     
     print(f"\n  ⚖️  Testing neutral sentiment accuracy...\n")
     
@@ -305,11 +305,11 @@ def test_neutral_sentiment_accuracy(openai_client, sentiment_dataset):
     # Neutral is hardest - accept 60% threshold
     assert accuracy >= 0.60, f"Neutral detection too low: {accuracy:.1%}"
 
-    print(f"\n✅ TEST #27 PASSED - Neutral sentiment detection adequate")
+    print(f"\n✅ PASSED - Neutral sentiment detection adequate")
 
 
 def test_consistency_over_multiple_runs(openai_client):
-    """TEST #28: Test if temperature=0 gives consistent results"""
+    """Test if temperature=0 gives consistent results"""
     
     print(f"\n  🔄 Testing consistency over 5 runs (temp=0)...\n")
     
@@ -350,11 +350,11 @@ def test_consistency_over_multiple_runs(openai_client):
     
     assert is_consistent, f"Inconsistent predictions at temp=0: {unique_predictions}"
     
-    print(f"\n✅ TEST #28 PASSED - Results are consistent")
+    print(f"\n✅ PASSED - Results are consistent")
 
 
 def test_cost_tracking(openai_client, sentiment_dataset):
-    """TEST #29: Track actual API costs for the test suite using real token usage"""
+    """Track actual API costs for the test suite using real token usage"""
 
     print(f"\n  💰 Tracking API costs...\n")
 
@@ -416,11 +416,11 @@ def test_cost_tracking(openai_client, sentiment_dataset):
     # Cost should be very low for testing
     assert total_cost < 0.01, f"Test costs too high: ${total_cost:.6f}"
 
-    print(f"\n✅ TEST #29 PASSED - Cost tracking complete")
+    print(f"\n✅ PASSED - Cost tracking complete")
 
 
 def test_non_english_handling(openai_client):
-    """TEST #30: Test handling of non-English reviews"""
+    """Test handling of non-English reviews"""
     
     print(f"\n  🌍 Testing non-English text handling...\n")
     
@@ -468,11 +468,11 @@ def test_non_english_handling(openai_client):
     # Should handle most non-English text
     assert accuracy >= 0.75, f"Non-English handling too low: {accuracy:.1%}"
 
-    print(f"\n✅ TEST #30 PASSED - Non-English text handled")
+    print(f"\n✅ PASSED - Non-English text handled")
 
 
 def test_handles_rate_limit_error():
-    """TEST #31: Gracefully handle rate limit errors with retry logic"""
+    """Gracefully handle rate limit errors with retry logic"""
 
     print(f"\n  🔬 Testing rate limit error handling...\n")
 
@@ -530,11 +530,11 @@ def test_handles_rate_limit_error():
     assert mock_client.chat.completions.create.call_count == 2, \
         "Should call API twice (fail + success)"
 
-    print(f"\n✅ TEST #31 PASSED - Rate limit error handled correctly")
+    print(f"\n✅ PASSED - Rate limit error handled correctly")
 
 
 def test_handles_invalid_model_name(openai_client):
-    """TEST #32: Handle invalid model name gracefully with clear error"""
+    """Handle invalid model name gracefully with clear error"""
 
     print(f"\n  🚫 Testing invalid model name handling...\n")
 
@@ -563,11 +563,11 @@ def test_handles_invalid_model_name(openai_client):
 
         print(f"  ✓ Error message is clear and informative")
 
-    print(f"\n✅ TEST #32 PASSED - Invalid model name handled correctly")
+    print(f"\n✅ PASSED - Invalid model name handled correctly")
 
 
 def test_handles_missing_messages_parameter(openai_client):
-    """TEST #33a: Handle missing required 'messages' parameter"""
+    """Handle missing required 'messages' parameter"""
 
     print(f"\n  ⚠️  Testing missing 'messages' parameter...\n")
 
@@ -590,11 +590,11 @@ def test_handles_missing_messages_parameter(openai_client):
         assert "messages" in error_str or "required" in error_str, \
             f"Error should mention missing 'messages' parameter: {str(e)}"
 
-    print(f"\n✅ TEST #33a PASSED - Missing 'messages' parameter handled correctly")
+    print(f"\n✅ PASSED - Missing 'messages' parameter handled correctly")
 
 
 def test_handles_invalid_parameter_type(openai_client):
-    """TEST #33b: Handle invalid parameter types with clear errors"""
+    """Handle invalid parameter types with clear errors"""
 
     print(f"\n  ⚠️  Testing invalid parameter type...\n")
 
@@ -620,11 +620,11 @@ def test_handles_invalid_parameter_type(openai_client):
         assert "temperature" in error_str or "type" in error_str or "invalid" in error_str, \
             f"Error should mention temperature or type issue: {str(e)}"
 
-    print(f"\n✅ TEST #33b PASSED - Invalid parameter type handled correctly")
+    print(f"\n✅ PASSED - Invalid parameter type handled correctly")
 
 
 def test_handles_invalid_message_role(openai_client):
-    """TEST #33c: Handle invalid message roles with clear errors"""
+    """Handle invalid message roles with clear errors"""
 
     print(f"\n  ⚠️  Testing invalid message role...\n")
 
@@ -651,11 +651,11 @@ def test_handles_invalid_message_role(openai_client):
         assert "role" in error_str or "invalid" in error_str, \
             f"Error should mention invalid role: {str(e)}"
 
-    print(f"\n✅ TEST #33c PASSED - Invalid message role handled correctly")
+    print(f"\n✅ PASSED - Invalid message role handled correctly")
 
 
 def test_handles_network_timeout():
-    """TEST #34: Handle network timeouts gracefully"""
+    """Handle network timeouts gracefully"""
 
     print(f"\n  ⏱️  Testing network timeout handling...\n")
 
@@ -690,11 +690,11 @@ def test_handles_network_timeout():
         assert isinstance(e, APITimeoutError), \
             "Should raise APITimeoutError"
 
-    print(f"\n✅ TEST #34 PASSED - Network timeout handled correctly")
+    print(f"\n✅ PASSED - Network timeout handled correctly")
 
 
 def test_invalid_api_key():
-    """TEST #35: Reject invalid API keys with clear authentication error"""
+    """Reject invalid API keys with clear authentication error"""
 
     print(f"\n  🔑 Testing invalid API key handling...\n")
 
@@ -724,11 +724,11 @@ def test_invalid_api_key():
 
         print(f"  ✓ Error message clearly indicates authentication failure")
 
-    print(f"\n✅ TEST #35 PASSED - Invalid API key rejected correctly")
+    print(f"\n✅ PASSED - Invalid API key rejected correctly")
 
 
 def test_missing_api_key():
-    """TEST #36: Handle missing API key configuration with clear error"""
+    """Handle missing API key configuration with clear error"""
 
     print(f"\n  🚫 Testing missing API key handling...\n")
 
@@ -761,11 +761,11 @@ def test_missing_api_key():
 
         print(f"  ✓ Error message clearly indicates missing/invalid API key")
 
-    print(f"\n✅ TEST #36 PASSED - Missing API key handled correctly")
+    print(f"\n✅ PASSED - Missing API key handled correctly")
 
 
 def test_response_has_required_fields(openai_client):
-    """TEST #37: API response contains all expected fields per OpenAI spec"""
+    """API response contains all expected fields per OpenAI spec"""
 
     print(f"\n  📋 Testing API response structure...\n")
 
@@ -828,11 +828,11 @@ def test_response_has_required_fields(openai_client):
     print(f"    - Choices: {len(response.choices)}")
     print(f"    - Content length: {len(message.content)} chars")
 
-    print(f"\n✅ TEST #37 PASSED - Response structure validated")
+    print(f"\n✅ PASSED - Response structure validated")
 
 
 def test_usage_tokens_are_positive(openai_client):
-    """TEST #38: Token counts are always positive integers"""
+    """Token counts are always positive integers"""
 
     print(f"\n  🔢 Testing token count validity...\n")
 
@@ -879,4 +879,4 @@ def test_usage_tokens_are_positive(openai_client):
 
     print(f"  ✓ Total tokens = prompt tokens + completion tokens")
 
-    print(f"\n✅ TEST #38 PASSED - Token counts validated correctly")
+    print(f"\n✅ PASSED - Token counts validated correctly")

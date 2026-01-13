@@ -5,7 +5,7 @@ MODEL = "gpt-4o-mini"
 
 
 def test_refuses_impossible_question(openai_client):
-    """TEST #6: Detects impossible historical question"""
+    """Detects impossible historical question"""
 
     response = openai_client.chat.completions.create(
         model=MODEL,
@@ -39,11 +39,11 @@ def test_refuses_impossible_question(openai_client):
     assert found_refusal, f"Model should refuse impossible question, but said: {answer}"
 
     print(f"  ✓ Model correctly handled impossible question")
-    print(f"\n✅ TEST #6 PASSED - Refused impossible historical fact")
+    print(f"\n✅ PASSED - Refused impossible historical fact")
 
 
 def test_consistency_across_phrasings(openai_client):
-    """TEST #7: Same fact, different phrasing → same answer"""
+    """Same fact, different phrasing → same answer"""
 
     # Same question asked 4 different ways
     questions = [
@@ -73,11 +73,11 @@ def test_consistency_across_phrasings(openai_client):
     ), f"Only {paris_count}/{len(questions)} answers mentioned Paris: {answers}"
 
     print(f"\n  ✓ All {len(questions)} phrasings correctly answered 'Paris'")
-    print(f"\n✅ TEST #7 PASSED - Consistent across all phrasings")
+    print(f"\n✅ PASSED - Consistent across all phrasings")
 
 
 def test_detects_fake_historical_event(openai_client):
-    """TEST #8: Refuses to describe fake historical events"""
+    """Refuses to describe fake historical events"""
 
     response = openai_client.chat.completions.create(
         model=MODEL,
@@ -128,10 +128,10 @@ def test_detects_fake_historical_event(openai_client):
     else:
         print(f"  ✓ Model showed appropriate uncertainty")
 
-    print(f"\n✅ TEST #8 PASSED - Handled fake date appropriately")
+    print(f"\n✅ PASSED - Handled fake date appropriately")
 
 def test_refuses_to_invent_citation(openai_client):
-    """TEST #9: Doesn't invent fake academic sources"""
+    """Doesn't invent fake academic sources"""
     
     response = openai_client.chat.completions.create(
         model=MODEL,
@@ -177,10 +177,10 @@ def test_refuses_to_invent_citation(openai_client):
         f"Model should show caution about non-existent paper, but said: {answer}"
     
     print(f"  ✓ Model appropriately refused to cite fake paper")
-    print(f"\n✅ TEST #9 PASSED - Did not invent fake citation")
+    print(f"\n✅ PASSED - Did not invent fake citation")
 
 def test_math_consistency(openai_client):
-    """TEST #10: Basic math should be consistent and correct"""
+    """Basic math should be consistent and correct"""
     
     # Test cases: (question, expected_answer)
     problems = [
@@ -215,4 +215,4 @@ def test_math_consistency(openai_client):
             f"Wrong math: {question} should be {expected}, got {answer}"
     
     print(f"\n  ✓ All {len(problems)} math problems correct")
-    print(f"\n✅ TEST #10 PASSED - Math is consistent")
+    print(f"\n✅ PASSED - Math is consistent")

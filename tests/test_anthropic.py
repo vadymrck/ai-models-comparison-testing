@@ -7,7 +7,7 @@ OPEN_AI_MODEL = "gpt-4o-mini"
 
 
 def test_claude_basic_classification(anthropic_client, sentiment_dataset):
-    """TEST #19: Claude can classify sentiment correctly"""
+    """Claude can classify sentiment correctly"""
     
     print(f"\n  🤖 Testing Claude on basic classification...")
     
@@ -36,11 +36,11 @@ def test_claude_basic_classification(anthropic_client, sentiment_dataset):
 
     assert accuracy >= 0.80, f"Claude accuracy too low: {accuracy:.1%}"
 
-    print(f"\n✅ TEST #19 PASSED - Claude basic classification working")
+    print(f"\n✅ PASSED - Claude basic classification working")
 
 
 def test_claude_full_metrics(anthropic_client, sentiment_dataset):
-    """TEST #20: Claude performance on full dataset"""
+    """Claude performance on full dataset"""
 
     print(f"\n  🔍 Testing Claude on full dataset ({len(sentiment_dataset)} examples)...")
     print(f"  ⏳ This will take ~30-60 seconds...\n")
@@ -127,11 +127,11 @@ def test_claude_full_metrics(anthropic_client, sentiment_dataset):
 
     assert metrics['f1'] > 0.85, f"Claude F1-score too low: {metrics['f1']:.3f}"
 
-    print(f"\n✅ TEST #20 PASSED - Claude F1: {metrics['f1']:.3f}")
+    print(f"\n✅ PASSED - Claude F1: {metrics['f1']:.3f}")
 
 
 def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dataset):
-    """TEST #21: Direct comparison between OpenAI and Claude models"""
+    """Direct comparison between OpenAI and Claude models"""
     
     print(f"\n  {'='*70}")
     print(f"  🥊 HEAD-TO-HEAD: OpenAI vs Anthropic")
@@ -198,11 +198,11 @@ def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dat
     for model_name, metrics in results.items():
         assert metrics['f1'] > 0.85, f"{model_name} F1 too low: {metrics['f1']:.3f}"
     
-    print(f"\n✅ TEST #21 PASSED - Comparison complete")
+    print(f"\n✅ PASSED - Comparison complete")
 
 
 def test_claude_edge_cases(anthropic_client, edge_cases):
-    """TEST #22: Claude handling of edge cases"""
+    """Claude handling of edge cases"""
 
     print(f"\n  🧪 Testing Claude on {len(edge_cases)} edge cases:")
     
@@ -231,4 +231,4 @@ def test_claude_edge_cases(anthropic_client, edge_cases):
 
     assert success_rate >= 0.60, f"Edge case success rate too low: {success_rate:.1%}"
 
-    print(f"\n✅ TEST #22 PASSED - Claude handles edge cases reasonably")
+    print(f"\n✅ PASSED - Claude handles edge cases reasonably")
