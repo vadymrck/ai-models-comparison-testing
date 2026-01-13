@@ -6,6 +6,7 @@ Advanced AI testing scenarios:
 - Cost tracking
 - Error handling (rate limits, invalid models, malformed requests, timeouts)
 - Authentication (invalid/missing API keys)
+- Response validation (structure, token counts)
 """
 
 import pytest
@@ -761,3 +762,121 @@ def test_missing_api_key():
         print(f"  ✓ Error message clearly indicates missing/invalid API key")
 
     print(f"\n✅ TEST #36 PASSED - Missing API key handled correctly")
+
+
+def test_response_has_required_fields(openai_client):
+    """TEST #37: API response contains all expected fields per OpenAI spec"""
+
+    print(f"\n  📋 Testing API response structure...\n")
+
+    # Make a simple API call
+    response = openai_client.chat.completions.create(
+        model=OPEN_AI_MODEL,
+        messages=[{"role": "user", "content": "Test"}],
+        temperature=0
+    )
+
+    print(f"  Validating response structure...")
+
+    # Check top-level required fields
+    assert hasattr(response, 'id'), "Response should have 'id' field"
+    assert hasattr(response, 'object'), "Response should have 'object' field"
+    assert hasattr(response, 'created'), "Response should have 'created' field"
+    assert hasattr(response, 'model'), "Response should have 'model' field"
+    assert hasattr(response, 'choices'), "Response should have 'choices' field"
+    assert hasattr(response, 'usage'), "Response should have 'usage' field"
+
+    print(f"  ✓ All top-level fields present")
+
+    # Verify field types
+    assert isinstance(response.id, str), "id should be string"
+    assert isinstance(response.object, str), "object should be string"
+    assert isinstance(response.created, int), "created should be integer (timestamp)"
+    assert isinstance(response.model, str), "model should be string"
+    assert isinstance(response.choices, list), "choices should be list"
+    assert len(response.choices) > 0, "choices should not be empty"
+
+    print(f"  ✓ Field types are correct")
+
+    # Check choices structure
+    first_choice = response.choices[0]
+    assert hasattr(first_choice, 'index'), "Choice should have 'index' field"
+    assert hasattr(first_choice, 'message'), "Choice should have 'message' field"
+    assert hasattr(first_choice, 'finish_reason'), "Choice should have 'finish_reason' field"
+
+    print(f"  ✓ Choices structure is valid")
+
+    # Check message structure
+    message = first_choice.message
+    assert hasattr(message, 'role'), "Message should have 'role' field"
+    assert hasattr(message, 'content'), "Message should have 'content' field"
+    assert message.role == "assistant", "Message role should be 'assistant'"
+    assert isinstance(message.content, str), "Message content should be string"
+
+    print(f"  ✓ Message structure is valid")
+
+    # Check usage structure
+    assert hasattr(response.usage, 'prompt_tokens'), "Usage should have 'prompt_tokens'"
+    assert hasattr(response.usage, 'completion_tokens'), "Usage should have 'completion_tokens'"
+    assert hasattr(response.usage, 'total_tokens'), "Usage should have 'total_tokens'"
+
+    print(f"  ✓ Usage structure is valid")
+
+    print(f"\n  Response structure summary:")
+    print(f"    - ID: {response.id}")
+    print(f"    - Model: {response.model}")
+    print(f"    - Choices: {len(response.choices)}")
+    print(f"    - Content length: {len(message.content)} chars")
+
+    print(f"\n✅ TEST #37 PASSED - Response structure validated")
+
+
+def test_usage_tokens_are_positive(openai_client):
+    """TEST #38: Token counts are always positive integers"""
+
+    print(f"\n  🔢 Testing token count validity...\n")
+
+    # Make a simple API call
+    response = openai_client.chat.completions.create(
+        model=OPEN_AI_MODEL,
+        messages=[{"role": "user", "content": "Hello, how are you?"}],
+        temperature=0
+    )
+
+    usage = response.usage
+
+    print(f"  Token counts:")
+    print(f"    - Prompt tokens: {usage.prompt_tokens}")
+    print(f"    - Completion tokens: {usage.completion_tokens}")
+    print(f"    - Total tokens: {usage.total_tokens}")
+
+    # Verify all token counts are positive integers
+    assert isinstance(usage.prompt_tokens, int), \
+        "prompt_tokens should be integer"
+    assert usage.prompt_tokens > 0, \
+        f"prompt_tokens should be positive, got: {usage.prompt_tokens}"
+
+    print(f"  ✓ Prompt tokens are valid positive integer")
+
+    assert isinstance(usage.completion_tokens, int), \
+        "completion_tokens should be integer"
+    assert usage.completion_tokens > 0, \
+        f"completion_tokens should be positive, got: {usage.completion_tokens}"
+
+    print(f"  ✓ Completion tokens are valid positive integer")
+
+    assert isinstance(usage.total_tokens, int), \
+        "total_tokens should be integer"
+    assert usage.total_tokens > 0, \
+        f"total_tokens should be positive, got: {usage.total_tokens}"
+
+    print(f"  ✓ Total tokens are valid positive integer")
+
+    # Verify total = prompt + completion
+    expected_total = usage.prompt_tokens + usage.completion_tokens
+    assert usage.total_tokens == expected_total, \
+        f"total_tokens should equal prompt + completion: {expected_total}, got: {usage.total_tokens}"
+
+    print(f"  ✓ Total tokens = prompt tokens + completion tokens")
+
+    print(f"\n✅ TEST #38 PASSED - Token counts validated correctly")
