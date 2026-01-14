@@ -5,24 +5,58 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-  schedule:
-    # Run tests daily at 2 AM UTC
-    - cron: '0 2 * * *'
-  workflow_dispatch:  # Manual trigger
+  # schedule:
+  #   # Run tests daily at 2 AM UTC - DISABLED for now
+  #   - cron: '0 2 * * *'
+  workflow_dispatch:  # Manual trigger - runs FULL test suite
 
 jobs:
-  test:
+  # STEP 2: Code Quality Job - Fast checks without API calls
+  code-quality:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black
+
+    - name: Run ruff linter
+      run: |
+        echo "🔍 Running ruff to check for code issues..."
+        ruff check . --output-format=github
+      continue-on-error: false
+
+    - name: Check code formatting with black
+      run: |
+        echo "🎨 Checking code formatting with black..."
+        black --check --diff .
+      continue-on-error: false
+
+  # Main test job with cost control
+  test:
+    runs-on: ubuntu-latest
+    needs: code-quality  # Only run tests if code quality passes
+    timeout-minutes: 30  # STEP 5: Fail-fast - max 30 min runtime
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
@@ -30,32 +64,59 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Run tests
+
+    # STEP 3: Cost Control - Different test sets based on trigger
+    - name: Run fast tests (push/PR)
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: |
-        pytest tests/ -v --html=reports/test-report.html --self-contained-html
-    
-    - name: Upload test report
+        echo "🚀 Running FAST tests only (cost control)..."
+        pytest tests/test_basic.py \
+          -v \
+          --maxfail=3 \
+          --timeout=300 \
+          --html=reports/test-report.html \
+          --self-contained-html \
+          --json-report \
+          --json-report-file=reports/test-results.json
+
+    - name: Run full test suite (manual trigger only)
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        echo "🔬 Running FULL test suite (manual trigger)..."
+        pytest tests/ \
+          -v \
+          --maxfail=5 \
+          --timeout=300 \
+          --html=reports/test-report.html \
+          --self-contained-html \
+          --json-report \
+          --json-report-file=reports/test-results.json
+
+    # STEP 4: Upload test reports
+    - name: Upload HTML test report
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: test-report
+        name: test-report-html
         path: reports/test-report.html
-    
-    - name: Upload test results
+
+    - name: Upload JSON test results
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: test-results
-        path: reports/*.json
+        name: test-results-json
+        path: reports/test-results.json
 
     - name: Comment on PR with results
       if: github.event_name == 'pull_request'
@@ -63,10 +124,31 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          // Would parse test results and comment on PR
+          let body = '## 🤖 AI QA Test Results\n\n';
+
+          try {
+            const results = JSON.parse(fs.readFileSync('reports/test-results.json', 'utf8'));
+            const passed = results.summary.passed || 0;
+            const failed = results.summary.failed || 0;
+            const total = results.summary.total || 0;
+
+            if (failed === 0) {
+              body += `✅ All ${passed}/${total} tests passed!\n\n`;
+              body += '**Note:** Only fast tests (test_basic.py) run automatically.\n';
+              body += 'Full test suite can be triggered manually via workflow_dispatch.';
+            } else {
+              body += `❌ ${failed} test(s) failed out of ${total}\n`;
+              body += `✅ ${passed} test(s) passed\n\n`;
+              body += 'Check the artifacts for detailed reports.';
+            }
+          } catch (error) {
+            body += '⚠️ Could not parse test results, but tests completed.\n';
+            body += 'Check the artifacts for detailed reports.';
+          }
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: '✅ AI QA tests passed! Check artifacts for detailed report.'
+            body: body
           });
