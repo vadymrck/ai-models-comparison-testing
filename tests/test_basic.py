@@ -1,12 +1,11 @@
-# Model constant for all tests
-MODEL = "gpt-4o-mini"
+from config import OPENAI_MODEL
 
 
 def test_model_responds(openai_client):
     """Verify model returns a response"""
     # Call OpenAI API
     response = openai_client.chat.completions.create(
-        model=MODEL,
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": "Say 'hello' and nothing else"}],
     )
     # Extract the answer
@@ -27,7 +26,7 @@ def test_determinism_at_zero_temperature(openai_client):
     # Ask the same question 3 times
     for i in range(3):
         response = openai_client.chat.completions.create(
-            model=MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0,  # ← This makes it deterministic
         )
@@ -50,13 +49,17 @@ def test_temperature_affects_creativity(openai_client):
 
     # Low temperature (deterministic)
     response_low = openai_client.chat.completions.create(
-        model=MODEL, messages=[{"role": "user", "content": prompt}], temperature=0
+        model=OPENAI_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
     )
     answer_low = response_low.choices[0].message.content
 
     # High temperature (creative)
     response_high = openai_client.chat.completions.create(
-        model=MODEL, messages=[{"role": "user", "content": prompt}], temperature=1.8
+        model=OPENAI_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=1.8,
     )
     answer_high = response_high.choices[0].message.content
 
@@ -75,7 +78,7 @@ def test_max_tokens_limit(openai_client):
     """Model respects token limits"""
 
     response = openai_client.chat.completions.create(
-        model=MODEL,
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": "Write a long story about a dragon"}],
         max_tokens=10,  # Very short limit
         temperature=0,

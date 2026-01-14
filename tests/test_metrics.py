@@ -2,15 +2,12 @@ import pytest
 import math
 import time
 
+from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
 from helpers import call_with_delay, classify_sentiment, compute_metrics
 from sklearn.metrics import (
-    precision_recall_fscore_support,
     confusion_matrix,
+    precision_recall_fscore_support,
 )
-
-# Model constants for all tests
-DEFAULT_MODEL = "gpt-4o-mini"
-COMPARED_MODEL = "gpt-3.5-turbo"
 
 
 def test_sentiment_classification_basic(openai_client, sentiment_dataset):
@@ -23,7 +20,7 @@ def test_sentiment_classification_basic(openai_client, sentiment_dataset):
     correct = 0
     for case in test_cases:
         # Use helper!
-        prediction = classify_sentiment(openai_client, DEFAULT_MODEL, case["text"])
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
         actual = case["label"]
 
         is_correct = prediction == actual
@@ -54,7 +51,7 @@ def test_sentiment_classification_full_metrics(openai_client, sentiment_dataset)
 
     for i, case in enumerate(sentiment_dataset, 1):
         # Use helper!
-        prediction = classify_sentiment(openai_client, DEFAULT_MODEL, case["text"])
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
         predictions.append(prediction)
         ground_truth.append(case["label"])
 
@@ -125,7 +122,7 @@ def test_per_class_metrics(openai_client, sentiment_dataset):
 
     for case in sentiment_dataset:
         # Use helper!
-        prediction = classify_sentiment(openai_client, DEFAULT_MODEL, case["text"])
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
         predictions.append(prediction)
         ground_truth.append(case["label"])
 
@@ -158,7 +155,7 @@ def test_per_class_metrics(openai_client, sentiment_dataset):
     print("\n✅ PASSED - All classes performing adequately")
 
 
-@pytest.fixture(params=[DEFAULT_MODEL, COMPARED_MODEL])
+@pytest.fixture(params=[OPENAI_MODEL, OPENAI_MODEL_COMPARE])
 def model_name(request):
     """Fixture that provides different model names"""
     return request.param
@@ -220,7 +217,7 @@ def test_temperature_impact_on_accuracy(
     for case in test_cases:
         # Use helper with temperature parameter!
         prediction = classify_sentiment(
-            openai_client, DEFAULT_MODEL, case["text"], temperature=temperature_value
+            openai_client, OPENAI_MODEL, case["text"], temperature=temperature_value
         )
         predictions.append(prediction)
         ground_truth.append(case["label"])
@@ -255,7 +252,7 @@ def test_classification_latency(openai_client, sentiment_dataset):
         start_time = time.time()
 
         # Use helper!
-        classify_sentiment(openai_client, DEFAULT_MODEL, case["text"])
+        classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         end_time = time.time()
         latency = end_time - start_time
@@ -285,7 +282,7 @@ def test_edge_cases(openai_client, edge_cases):
     results = []
     for i, case in enumerate(edge_cases, 1):
         # Use helper!
-        prediction = classify_sentiment(openai_client, DEFAULT_MODEL, case["text"])
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         is_acceptable = prediction in case["expected"]
         status = "✓" if is_acceptable else "⚠"
@@ -349,7 +346,7 @@ def test_batch_processing(openai_client, sentiment_dataset):
 
         response = call_with_delay(
             openai_client,
-            model=DEFAULT_MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": batch_prompt}],
             temperature=0,
         )

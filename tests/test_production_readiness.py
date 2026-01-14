@@ -7,12 +7,8 @@ Production-readiness tests:
 - Confidence detection
 """
 
+from config import ANTHROPIC_MODEL, OPENAI_MODEL
 from helpers import call_with_delay, classify_sentiment, normalize_sentiment
-
-# Model constants for all tests
-ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
-OPEN_AI_MODEL = "gpt-4o-mini"
-OPEN_AI_MODEL_TO_COMARE = "gpt-4o"
 
 
 def test_system_prompt_effectiveness(openai_client):
@@ -26,7 +22,7 @@ def test_system_prompt_effectiveness(openai_client):
     # Without system prompt
     response_default = call_with_delay(
         openai_client,
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -39,7 +35,7 @@ def test_system_prompt_effectiveness(openai_client):
     # With strict system prompt
     response_system = call_with_delay(
         openai_client,
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "system",
@@ -86,7 +82,7 @@ def test_few_shot_learning(openai_client):
     # Zero-shot (no examples)
     response_zero_shot = call_with_delay(
         openai_client,
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -108,7 +104,7 @@ def test_few_shot_learning(openai_client):
     ]
 
     response_few_shot = call_with_delay(
-        openai_client, model=OPEN_AI_MODEL, messages=few_shot_messages, temperature=0
+        openai_client, model=OPENAI_MODEL, messages=few_shot_messages, temperature=0
     )
 
     zero_shot_pred = normalize_sentiment(response_zero_shot.choices[0].message.content)
@@ -135,7 +131,7 @@ def test_streaming_response(openai_client):
 
     # Create streaming request with longer response to get multiple chunks
     stream = openai_client.chat.completions.create(
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -185,7 +181,7 @@ def test_cross_model_agreement_on_clear_cases(openai_client, anthropic_client):
     ]
 
     models = [
-        {"client": openai_client, "name": OPEN_AI_MODEL, "provider": "openai"},
+        {"client": openai_client, "name": OPENAI_MODEL, "provider": "openai"},
         {"client": anthropic_client, "name": ANTHROPIC_MODEL, "provider": "anthropic"},
     ]
 
@@ -245,7 +241,7 @@ def test_robustness_to_input_variations(openai_client):
     predictions = []
 
     for text in variations:
-        pred = classify_sentiment(openai_client, OPEN_AI_MODEL, text)
+        pred = classify_sentiment(openai_client, OPENAI_MODEL, text)
         predictions.append(pred)
         print(f"  '{text[:40]:<40}' → {pred}")
 

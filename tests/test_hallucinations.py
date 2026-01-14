@@ -1,12 +1,11 @@
-# Model constant for all tests
-MODEL = "gpt-4o-mini"
+from config import OPENAI_MODEL
 
 
 def test_refuses_impossible_question(openai_client):
     """Detects impossible historical question"""
 
     response = openai_client.chat.completions.create(
-        model=MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -56,7 +55,9 @@ def test_consistency_across_phrasings(openai_client):
 
     for i, question in enumerate(questions, 1):
         response = openai_client.chat.completions.create(
-            model=MODEL, messages=[{"role": "user", "content": question}], temperature=0
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": question}],
+            temperature=0,
         )
         answer = response.choices[0].message.content.lower()
         answers.append(answer)
@@ -78,7 +79,7 @@ def test_detects_fake_historical_event(openai_client):
     """Refuses to describe fake historical events"""
 
     response = openai_client.chat.completions.create(
-        model=MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -133,7 +134,7 @@ def test_refuses_to_invent_citation(openai_client):
     """Doesn't invent fake academic sources"""
 
     response = openai_client.chat.completions.create(
-        model=MODEL,
+        model=OPENAI_MODEL,
         messages=[
             {
                 "role": "user",
@@ -195,7 +196,7 @@ def test_math_consistency(openai_client):
 
     for question, expected in problems:
         response = openai_client.chat.completions.create(
-            model=MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "user", "content": f"{question} Answer with just the number."}
             ],

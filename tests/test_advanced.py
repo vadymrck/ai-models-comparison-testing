@@ -11,11 +11,8 @@ Advanced AI testing scenarios:
 
 import time
 
+from config import OPENAI_MODEL
 from helpers import call_with_delay, normalize_sentiment
-
-# Model constants for all tests
-ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
-OPEN_AI_MODEL = "gpt-4o-mini"
 
 
 def test_prompt_injection_resistance(openai_client):
@@ -53,7 +50,7 @@ def test_prompt_injection_resistance(openai_client):
     for i, case in enumerate(injection_attempts, 1):
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -119,7 +116,7 @@ def test_multi_turn_context(openai_client):
     ]
 
     response = call_with_delay(
-        openai_client, model=OPEN_AI_MODEL, messages=conversation, temperature=0
+        openai_client, model=OPENAI_MODEL, messages=conversation, temperature=0
     )
 
     prediction = normalize_sentiment(response.choices[0].message.content)
@@ -152,7 +149,7 @@ def test_special_characters_handling(openai_client):
     for case in special_cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -211,7 +208,7 @@ def test_very_long_text_handling(openai_client):
     for case in cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -258,7 +255,7 @@ def test_neutral_sentiment_accuracy(openai_client, sentiment_dataset):
     for case in neutral_cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -321,7 +318,7 @@ def test_consistency_over_multiple_runs(openai_client):
     for i in range(num_runs):
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -368,7 +365,7 @@ def test_cost_tracking(openai_client, sentiment_dataset):
     for case in test_cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -446,7 +443,7 @@ def test_non_english_handling(openai_client):
     for case in non_english_cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -516,7 +513,7 @@ def test_handles_rate_limit_error():
     start_time = time.time()
 
     result = call_with_delay(
-        mock_client, model=OPEN_AI_MODEL, messages=[{"role": "user", "content": "Test"}]
+        mock_client, model=OPENAI_MODEL, messages=[{"role": "user", "content": "Test"}]
     )
 
     elapsed = time.time() - start_time
@@ -584,7 +581,7 @@ def test_handles_missing_messages_parameter(openai_client):
 
     try:
         openai_client.chat.completions.create(
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             temperature=0,
             # Missing 'messages' - required parameter
         )
@@ -615,7 +612,7 @@ def test_handles_invalid_parameter_type(openai_client):
 
     try:
         openai_client.chat.completions.create(
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature="very-hot",  # Should be float 0-2, not string
         )
@@ -649,7 +646,7 @@ def test_handles_invalid_message_role(openai_client):
 
     try:
         openai_client.chat.completions.create(
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": invalid_role, "content": "Test"}],  # Invalid role
             temperature=0,
         )
@@ -692,7 +689,7 @@ def test_handles_network_timeout():
     # Should raise timeout error
     try:
         mock_client.chat.completions.create(
-            model=OPEN_AI_MODEL, messages=[{"role": "user", "content": "Test"}]
+            model=OPENAI_MODEL, messages=[{"role": "user", "content": "Test"}]
         )
         assert False, "Should have raised APITimeoutError"
 
@@ -721,7 +718,7 @@ def test_invalid_api_key():
 
     try:
         invalid_client.chat.completions.create(
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature=0,
         )
@@ -760,7 +757,7 @@ def test_missing_api_key():
     # Try to make API call with empty key
     try:
         invalid_client.chat.completions.create(
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature=0,
         )
@@ -792,7 +789,7 @@ def test_response_has_required_fields(openai_client):
 
     # Make a simple API call
     response = openai_client.chat.completions.create(
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": "Test"}],
         temperature=0,
     )
@@ -863,7 +860,7 @@ def test_usage_tokens_are_positive(openai_client):
 
     # Make a simple API call
     response = openai_client.chat.completions.create(
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": "Hello, how are you?"}],
         temperature=0,
     )

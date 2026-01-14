@@ -1,8 +1,5 @@
+from config import ANTHROPIC_MODEL, OPENAI_MODEL
 from helpers import classify_sentiment, compute_metrics
-
-# Model constants for all tests
-ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
-OPEN_AI_MODEL = "gpt-4o-mini"
 
 
 def test_claude_basic_classification(anthropic_client, sentiment_dataset):
@@ -147,7 +144,7 @@ def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dat
     test_cases = sentiment_dataset
 
     models = [
-        {"client": openai_client, "name": OPEN_AI_MODEL, "provider": "openai"},
+        {"client": openai_client, "name": OPENAI_MODEL, "provider": "openai"},
         {"client": anthropic_client, "name": ANTHROPIC_MODEL, "provider": "anthropic"},
     ]
 
@@ -194,7 +191,7 @@ def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dat
 
     # Determine winner
     best_model = max(results.items(), key=lambda x: x[1]["f1"])
-    f1_diff = abs(results[OPEN_AI_MODEL]["f1"] - results[ANTHROPIC_MODEL]["f1"])
+    f1_diff = abs(results[OPENAI_MODEL]["f1"] - results[ANTHROPIC_MODEL]["f1"])
 
     if f1_diff < 0.02:
         print(f"  🤝 TIE: Both models performed similarly (Δ F1: {f1_diff:.3f})")

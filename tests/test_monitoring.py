@@ -8,12 +8,8 @@ import time
 import json
 import os
 from datetime import datetime
+from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
 from helpers import call_with_delay, classify_sentiment
-
-# Model constants for all tests
-ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
-OPEN_AI_MODEL = "gpt-4o-mini"
-OPEN_AI_MODEL_TO_COMARE = "gpt-4o"
 
 
 def test_response_time_benchmark(openai_client, sentiment_dataset):
@@ -30,7 +26,7 @@ def test_response_time_benchmark(openai_client, sentiment_dataset):
         start_time = time.time()
 
         for case in test_cases:
-            classify_sentiment(openai_client, OPEN_AI_MODEL, case["text"])
+            classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         elapsed = time.time() - start_time
         avg_time = elapsed / size
@@ -51,7 +47,7 @@ def test_response_time_benchmark(openai_client, sentiment_dataset):
 
     benchmark_data = {
         "timestamp": datetime.now().isoformat(),
-        "model": OPEN_AI_MODEL,
+        "model": OPENAI_MODEL,
         "results": results,
     }
 
@@ -99,7 +95,7 @@ def test_batch_vs_sequential_performance(openai_client, sentiment_dataset):
     start_sequential = time.time()
 
     for case in test_cases:
-        classify_sentiment(openai_client, OPEN_AI_MODEL, case["text"])
+        classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
     sequential_time = time.time() - start_sequential
 
@@ -114,7 +110,7 @@ def test_batch_vs_sequential_performance(openai_client, sentiment_dataset):
 
     call_with_delay(
         openai_client,
-        model=OPEN_AI_MODEL,
+        model=OPENAI_MODEL,
         messages=[{"role": "user", "content": batch_prompt}],
         temperature=0,
     )
@@ -152,7 +148,7 @@ def test_model_regression_detection(openai_client, sentiment_dataset):
     ground_truth = []
 
     for case in test_cases:
-        prediction = classify_sentiment(openai_client, OPEN_AI_MODEL, case["text"])
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
         predictions.append(prediction)
         ground_truth.append(case["label"])
 
@@ -165,7 +161,7 @@ def test_model_regression_detection(openai_client, sentiment_dataset):
 
     current_result = {
         "timestamp": datetime.now().isoformat(),
-        "model": OPEN_AI_MODEL,
+        "model": OPENAI_MODEL,
         "accuracy": current_accuracy,
         "test_size": len(test_cases),
     }
@@ -221,7 +217,7 @@ def test_concurrent_requests_handling(openai_client, sentiment_dataset):
 
     def classify_single(case):
         """Helper for concurrent classification"""
-        return classify_sentiment(openai_client, OPEN_AI_MODEL, case["text"])
+        return classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
     start_time = time.time()
 
@@ -286,7 +282,7 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     for case in test_cases:
         response = call_with_delay(
             openai_client,
-            model=OPEN_AI_MODEL,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -329,7 +325,7 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     # Save token tracking
     token_data = {
         "timestamp": datetime.now().isoformat(),
-        "model": OPEN_AI_MODEL,
+        "model": OPENAI_MODEL,
         "test_size": len(test_cases),
         "total_tokens": total_tokens,
         "avg_tokens_per_request": avg_total,
@@ -362,7 +358,7 @@ def test_error_rate_monitoring(openai_client, sentiment_dataset):
 
     for i, case in enumerate(test_cases):
         try:
-            prediction = classify_sentiment(openai_client, OPEN_AI_MODEL, case["text"])
+            prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
             # Check if prediction is valid
             if prediction not in ["positive", "negative", "neutral"]:
@@ -397,7 +393,7 @@ def test_error_rate_monitoring(openai_client, sentiment_dataset):
     # Save error tracking
     error_data = {
         "timestamp": datetime.now().isoformat(),
-        "model": OPEN_AI_MODEL,
+        "model": OPENAI_MODEL,
         "total_tests": len(test_cases),
         "successful": successful,
         "failed": failed,
@@ -423,7 +419,7 @@ def test_model_version_comparison(openai_client, sentiment_dataset):
 
     print("\n  🔄 Comparing model versions...\n")
 
-    models = [OPEN_AI_MODEL, OPEN_AI_MODEL_TO_COMARE]
+    models = [OPENAI_MODEL, OPENAI_MODEL_COMPARE]
 
     test_cases = sentiment_dataset[:10]
     results = {}
