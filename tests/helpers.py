@@ -4,6 +4,18 @@ from anthropic import RateLimitError as AnthropicRateLimitError
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 
+def normalize_sentiment(prediction: str) -> str:
+    """Normalize model output to: positive, negative, or neutral."""
+    prediction = prediction.strip().lower()
+    if prediction not in ["positive", "negative", "neutral"]:
+        if "positive" in prediction:
+            return "positive"
+        elif "negative" in prediction:
+            return "negative"
+        return "neutral"
+    return prediction
+
+
 def call_with_delay(client, **kwargs):
     """Call OpenAI API with a delay to avoid rate limits."""
     while True:
@@ -50,7 +62,7 @@ def classify_sentiment(client, model, text, temperature=0, provider="openai"):
             temperature=temperature,
             messages=[{"role": "user", "content": prompt}],
         )
-        prediction = response.content[0].text.strip().lower()
+        prediction = response.content[0].text
     else:  # openai
         response = call_with_delay(
             client,
@@ -58,18 +70,9 @@ def classify_sentiment(client, model, text, temperature=0, provider="openai"):
             messages=[{"role": "user", "content": prompt}],
             temperature=temperature,
         )
-        prediction = response.choices[0].message.content.strip().lower()
+        prediction = response.choices[0].message.content
 
-    # Normalize prediction
-    if prediction not in ["positive", "negative", "neutral"]:
-        if "positive" in prediction:
-            return "positive"
-        elif "negative" in prediction:
-            return "negative"
-        else:
-            return "neutral"
-
-    return prediction
+    return normalize_sentiment(prediction)
 
 
 def compute_metrics(predictions, ground_truth):

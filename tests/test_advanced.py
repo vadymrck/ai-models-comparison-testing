@@ -10,7 +10,8 @@ Advanced AI testing scenarios:
 """
 
 import time
-from helpers import call_with_delay
+
+from helpers import call_with_delay, normalize_sentiment
 
 # Model constants for all tests
 ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
@@ -62,16 +63,8 @@ def test_prompt_injection_resistance(openai_client):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        # Normalize
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         is_correct = prediction == case["expected"]
         status = "✓" if is_correct else "⚠️"
@@ -129,13 +122,13 @@ def test_multi_turn_context(openai_client):
         openai_client, model=OPEN_AI_MODEL, messages=conversation, temperature=0
     )
 
-    prediction = response.choices[0].message.content.strip().lower()
+    prediction = normalize_sentiment(response.choices[0].message.content)
 
     print("  Conversation context: Beautiful packaging BUT broken product")
     print(f"  Model's overall sentiment: {prediction}")
 
     # Should recognize overall negative despite positive start
-    assert "negative" in prediction, f"Failed to maintain context: {prediction}"
+    assert prediction == "negative", f"Failed to maintain context: {prediction}"
 
     print("\n✅ PASSED - Context maintained correctly")
 
@@ -169,15 +162,8 @@ def test_special_characters_handling(openai_client):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         is_correct = prediction == case["expected"]
         if is_correct:
@@ -235,15 +221,8 @@ def test_very_long_text_handling(openai_client):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         is_correct = prediction == case["expected"]
         if is_correct:
@@ -289,15 +268,8 @@ def test_neutral_sentiment_accuracy(openai_client, sentiment_dataset):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         predictions.append(prediction)
         ground_truth.append(case["label"])
@@ -359,15 +331,8 @@ def test_consistency_over_multiple_runs(openai_client):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         predictions.append(prediction)
         print(f"  Run {i+1}: {prediction}")
@@ -491,15 +456,8 @@ def test_non_english_handling(openai_client):
             temperature=0,
         )
 
-        prediction = response.choices[0].message.content.strip().lower()
-
-        if prediction not in ["positive", "negative", "neutral"]:
-            if "positive" in prediction:
-                prediction = "positive"
-            elif "negative" in prediction:
-                prediction = "negative"
-            else:
-                prediction = "neutral"
+        prediction = response.choices[0].message.content
+        prediction = normalize_sentiment(prediction)
 
         is_correct = prediction == case["expected"]
         if is_correct:
@@ -526,9 +484,10 @@ def test_handles_rate_limit_error():
 
     print("\n  🔬 Testing rate limit error handling...\n")
 
-    from unittest.mock import Mock
-    from openai import RateLimitError
     import time
+    from unittest.mock import Mock
+
+    from openai import RateLimitError
 
     # Mock the OpenAI client (not the helper function)
     mock_client = Mock()
@@ -715,6 +674,7 @@ def test_handles_network_timeout():
     print("\n  ⏱️  Testing network timeout handling...\n")
 
     from unittest.mock import Mock
+
     from openai import APITimeoutError
 
     # Mock the OpenAI client
@@ -751,7 +711,7 @@ def test_invalid_api_key():
 
     print("\n  🔑 Testing invalid API key handling...\n")
 
-    from openai import OpenAI, AuthenticationError
+    from openai import AuthenticationError, OpenAI
 
     # Create client with fake/invalid API key
     fake_api_key = "sk-fake-invalid-key-12345678901234567890"
@@ -789,7 +749,7 @@ def test_missing_api_key():
 
     print("\n  🚫 Testing missing API key handling...\n")
 
-    from openai import OpenAI, AuthenticationError
+    from openai import AuthenticationError, OpenAI
 
     # Try to create client with empty string as API key (force no fallback)
     print("  Attempting to use OpenAI client with empty API key...")

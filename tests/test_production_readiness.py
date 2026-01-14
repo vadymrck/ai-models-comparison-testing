@@ -7,7 +7,7 @@ Production-readiness tests:
 - Confidence detection
 """
 
-from helpers import call_with_delay, classify_sentiment
+from helpers import call_with_delay, classify_sentiment, normalize_sentiment
 
 # Model constants for all tests
 ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"
@@ -111,8 +111,8 @@ def test_few_shot_learning(openai_client):
         openai_client, model=OPEN_AI_MODEL, messages=few_shot_messages, temperature=0
     )
 
-    zero_shot_pred = response_zero_shot.choices[0].message.content.strip().lower()
-    few_shot_pred = response_few_shot.choices[0].message.content.strip().lower()
+    zero_shot_pred = normalize_sentiment(response_zero_shot.choices[0].message.content)
+    few_shot_pred = normalize_sentiment(response_few_shot.choices[0].message.content)
 
     print(f"  Test text: '{test_text}'")
     print(f"  Zero-shot prediction: {zero_shot_pred}")
