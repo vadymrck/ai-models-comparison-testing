@@ -12,7 +12,12 @@ Advanced AI testing scenarios:
 import time
 
 from config import OPENAI_MODEL
-from helpers import call_with_delay, normalize_sentiment
+from helpers import (
+    call_with_delay,
+    calculate_cost,
+    classify_sentiment,
+    normalize_sentiment,
+)
 
 
 def test_prompt_injection_resistance(openai_client):
@@ -48,20 +53,7 @@ def test_prompt_injection_resistance(openai_client):
     passed = 0
 
     for i, case in enumerate(injection_attempts, 1):
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         is_correct = prediction == case["expected"]
         status = "✓" if is_correct else "⚠️"
@@ -147,20 +139,7 @@ def test_special_characters_handling(openai_client):
     correct = 0
 
     for case in special_cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         is_correct = prediction == case["expected"]
         if is_correct:
@@ -206,20 +185,7 @@ def test_very_long_text_handling(openai_client):
     correct = 0
 
     for case in cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         is_correct = prediction == case["expected"]
         if is_correct:
@@ -253,20 +219,7 @@ def test_neutral_sentiment_accuracy(openai_client, sentiment_dataset):
     failed_cases = []
 
     for case in neutral_cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         predictions.append(prediction)
         ground_truth.append(case["label"])
@@ -316,20 +269,7 @@ def test_consistency_over_multiple_runs(openai_client):
     predictions = []
 
     for i in range(num_runs):
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{test_text}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, test_text)
 
         predictions.append(prediction)
         print(f"  Run {i+1}: {prediction}")
@@ -363,16 +303,8 @@ def test_cost_tracking(openai_client, sentiment_dataset):
     start_time = time.time()
 
     for case in test_cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
+        _, response = classify_sentiment(
+            openai_client, OPENAI_MODEL, case["text"], return_raw_response=True
         )
 
         # Extract REAL token usage from API response
@@ -383,13 +315,8 @@ def test_cost_tracking(openai_client, sentiment_dataset):
 
     total_requests = len(test_cases)
 
-    # GPT-4o-mini pricing (as of 2025)
-    # Input: $0.150 per 1M tokens
-    # Output: $0.600 per 1M tokens
-
-    input_cost = (total_input_tokens / 1_000_000) * 0.150
-    output_cost = (total_output_tokens / 1_000_000) * 0.600
-    total_cost = input_cost + output_cost
+    # Calculate costs using helper
+    costs = calculate_cost(total_input_tokens, total_output_tokens, OPENAI_MODEL)
 
     print("  📊 Actual Cost Analysis:")
     print(f"  Total requests: {total_requests}")
@@ -397,12 +324,12 @@ def test_cost_tracking(openai_client, sentiment_dataset):
     print(f"  Actual output tokens: {total_output_tokens:,}")
     print(f"  Average input tokens/request: {total_input_tokens/total_requests:.1f}")
     print(f"  Average output tokens/request: {total_output_tokens/total_requests:.1f}")
-    print(f"  Input cost: ${input_cost:.6f}")
-    print(f"  Output cost: ${output_cost:.6f}")
-    print(f"  Total cost: ${total_cost:.6f}")
+    print(f"  Input cost: ${costs['input_cost']:.6f}")
+    print(f"  Output cost: ${costs['output_cost']:.6f}")
+    print(f"  Total cost: ${costs['total_cost']:.6f}")
 
     # Extrapolate to full dataset based on actual average cost
-    avg_cost_per_request = total_cost / total_requests
+    avg_cost_per_request = costs["total_cost"] / total_requests
     full_dataset_cost = avg_cost_per_request * len(sentiment_dataset)
     print(
         f"\n  💡 Extrapolated cost for full dataset ({len(sentiment_dataset)} examples): ${full_dataset_cost:.4f}"
@@ -412,7 +339,7 @@ def test_cost_tracking(openai_client, sentiment_dataset):
     print(f"  ⏱️  Average per request: {elapsed_time/total_requests:.3f}s")
 
     # Cost should be very low for testing
-    assert total_cost < 0.01, f"Test costs too high: ${total_cost:.6f}"
+    assert costs["total_cost"] < 0.01, f"Test costs too high: ${costs['total_cost']:.6f}"
 
     print("\n✅ PASSED - Cost tracking complete")
 
@@ -441,20 +368,7 @@ def test_non_english_handling(openai_client):
     correct = 0
 
     for case in non_english_cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
-        )
-
-        prediction = response.choices[0].message.content
-        prediction = normalize_sentiment(prediction)
+        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
 
         is_correct = prediction == case["expected"]
         if is_correct:

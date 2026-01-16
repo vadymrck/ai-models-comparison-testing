@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime
 from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
-from helpers import call_with_delay, classify_sentiment
+from helpers import call_with_delay, calculate_cost, classify_sentiment
 
 
 def test_response_time_benchmark(openai_client, sentiment_dataset):
@@ -280,16 +280,8 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     total_tokens = 0
 
     for case in test_cases:
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Classify as: positive, negative, or neutral\n\n{case['text']}\n\nSentiment:",
-                }
-            ],
-            temperature=0,
+        _, response = classify_sentiment(
+            openai_client, OPENAI_MODEL, case["text"], return_raw_response=True
         )
 
         # Extract token usage
@@ -298,8 +290,6 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
         total_completion_tokens += usage.completion_tokens
         total_tokens += usage.total_tokens
 
-    total_prompt_tokens / len(test_cases)
-    total_completion_tokens / len(test_cases)
     avg_total = total_tokens / len(test_cases)
 
     print("  📊 Token Usage Statistics:")
@@ -308,18 +298,16 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     print(f"  Total tokens: {total_tokens:,}")
     print(f"  Average per request: {avg_total:.1f} tokens")
 
-    # Calculate cost (GPT-4o-mini pricing)
-    input_cost = (total_prompt_tokens / 1_000_000) * 0.150
-    output_cost = (total_completion_tokens / 1_000_000) * 0.600
-    total_cost = input_cost + output_cost
+    # Calculate cost using helper
+    costs = calculate_cost(total_prompt_tokens, total_completion_tokens, OPENAI_MODEL)
 
     print("\n  💰 Cost Analysis:")
-    print(f"  Input cost: ${input_cost:.6f}")
-    print(f"  Output cost: ${output_cost:.6f}")
-    print(f"  Total cost: ${total_cost:.6f}")
+    print(f"  Input cost: ${costs['input_cost']:.6f}")
+    print(f"  Output cost: ${costs['output_cost']:.6f}")
+    print(f"  Total cost: ${costs['total_cost']:.6f}")
 
     # Extrapolate to full dataset
-    full_cost = total_cost * (len(sentiment_dataset) / len(test_cases))
+    full_cost = costs["total_cost"] * (len(sentiment_dataset) / len(test_cases))
     print(f"  Full dataset cost estimate: ${full_cost:.4f}")
 
     # Save token tracking
@@ -329,8 +317,8 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
         "test_size": len(test_cases),
         "total_tokens": total_tokens,
         "avg_tokens_per_request": avg_total,
-        "total_cost": total_cost,
-        "cost_per_request": total_cost / len(test_cases),
+        "total_cost": costs["total_cost"],
+        "cost_per_request": costs["total_cost"] / len(test_cases),
     }
 
     os.makedirs("reports", exist_ok=True)

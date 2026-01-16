@@ -40,7 +40,9 @@ def call_claude_with_delay(client, **kwargs):
             time.sleep(1.0)
 
 
-def classify_sentiment(client, model, text, temperature=0, provider="openai"):
+def classify_sentiment(
+    client, model, text, temperature=0, provider="openai", return_raw_response=False
+):
     """
     Classify sentiment using OpenAI or Anthropic API.
     Returns normalized prediction: 'positive', 'negative', or 'neutral'.
@@ -51,6 +53,11 @@ def classify_sentiment(client, model, text, temperature=0, provider="openai"):
         text: Text to classify
         temperature: Temperature setting (0-1)
         provider: "openai" or "anthropic"
+        return_raw_response: If True, returns (prediction, response) tuple
+
+    Returns:
+        str: Normalized sentiment ('positive', 'negative', 'neutral')
+        OR tuple: (prediction, raw_response) if return_raw_response=True
     """
     prompt = f"Classify as: positive, negative, or neutral\n\n{text}\n\nSentiment:"
 
@@ -72,7 +79,11 @@ def classify_sentiment(client, model, text, temperature=0, provider="openai"):
         )
         prediction = response.choices[0].message.content
 
-    return normalize_sentiment(prediction)
+    normalized = normalize_sentiment(prediction)
+
+    if return_raw_response:
+        return normalized, response
+    return normalized
 
 
 def compute_metrics(predictions, ground_truth):
@@ -96,4 +107,31 @@ def compute_metrics(predictions, ground_truth):
         "f1": f1,
         "y_true": y_true,
         "y_pred": y_pred,
+    }
+
+
+def calculate_cost(input_tokens, output_tokens, model):
+    """
+    Calculate API cost based on token usage and model pricing.
+
+    Args:
+        input_tokens: Number of input/prompt tokens
+        output_tokens: Number of output/completion tokens
+        model: Model name (must exist in config.PRICING)
+
+    Returns:
+        dict with input_cost, output_cost, and total_cost
+    """
+    from config import PRICING
+
+    pricing = PRICING.get(model, {"input": 0, "output": 0})
+
+    input_cost = (input_tokens / 1_000_000) * pricing["input"]
+    output_cost = (output_tokens / 1_000_000) * pricing["output"]
+    total_cost = input_cost + output_cost
+
+    return {
+        "input_cost": input_cost,
+        "output_cost": output_cost,
+        "total_cost": total_cost,
     }
