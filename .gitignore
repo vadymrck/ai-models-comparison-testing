@@ -14,8 +14,7 @@ __pycache__/
 .pytest_cache/
 
 # Reports (generated locally)
-reports/*.html
-reports/*.xml
+reports/
 
 # IDE files
 .vscode/

@@ -16,7 +16,7 @@ def test_refuses_impossible_question(openai_client):
     )
 
     answer = response.choices[0].message.content.lower()
-    print(f"\n  🤖 Model response: {answer}")
+    print(f"\n  Model response: {answer}")
 
     # Model should indicate this is impossible
     # US has only had 46 presidents (as of 2024)
@@ -36,7 +36,7 @@ def test_refuses_impossible_question(openai_client):
     assert found_refusal, f"Model should refuse impossible question, but said: {answer}"
 
     print("  ✓ Model correctly handled impossible question")
-    print("\n✅ PASSED - Refused impossible historical fact")
+    print("\nPASSED - Refused impossible historical fact")
 
 
 def test_consistency_across_phrasings(openai_client):
@@ -72,7 +72,7 @@ def test_consistency_across_phrasings(openai_client):
     ), f"Only {paris_count}/{len(questions)} answers mentioned Paris: {answers}"
 
     print(f"\n  ✓ All {len(questions)} phrasings correctly answered 'Paris'")
-    print("\n✅ PASSED - Consistent across all phrasings")
+    print("\nPASSED - Consistent across all phrasings")
 
 
 def test_detects_fake_historical_event(openai_client):
@@ -90,7 +90,7 @@ def test_detects_fake_historical_event(openai_client):
     )
 
     answer = response.choices[0].message.content.lower()
-    print(f"\n  🤖 Model response: {answer[:200]}...")
+    print(f"\n  Model response: {answer[:200]}...")
 
     # The real Great Emu War was in 1932, not 1952
     # Model should either:
@@ -127,7 +127,7 @@ def test_detects_fake_historical_event(openai_client):
     else:
         print("  ✓ Model showed appropriate uncertainty")
 
-    print("\n✅ PASSED - Handled fake date appropriately")
+    print("\nPASSED - Handled fake date appropriately")
 
 
 def test_refuses_to_invent_citation(openai_client):
@@ -145,7 +145,7 @@ def test_refuses_to_invent_citation(openai_client):
     )
 
     answer = response.choices[0].message.content.lower()
-    print(f"\n  🤖 Model response: {answer[:300]}...")
+    print(f"\n  Model response: {answer[:300]}...")
 
     # Model should NOT make up a fake paper
     # Should show inability/uncertainty
@@ -170,14 +170,14 @@ def test_refuses_to_invent_citation(openai_client):
     )
 
     if invented_details:
-        print("  ⚠️  WARNING: Model may have invented citation details")
+        print("  WARNING: Model may have invented citation details")
 
     assert (
         shows_caution
     ), f"Model should show caution about non-existent paper, but said: {answer}"
 
     print("  ✓ Model appropriately refused to cite fake paper")
-    print("\n✅ PASSED - Did not invent fake citation")
+    print("\nPASSED - Did not invent fake citation")
 
 
 def test_math_consistency(openai_client):
@@ -214,4 +214,4 @@ def test_math_consistency(openai_client):
         assert is_correct, f"Wrong math: {question} should be {expected}, got {answer}"
 
     print(f"\n  ✓ All {len(problems)} math problems correct")
-    print("\n✅ PASSED - Math is consistent")
+    print("\nPASSED - Math is consistent")

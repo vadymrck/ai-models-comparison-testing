@@ -5,7 +5,7 @@ from helpers import classify_sentiment, compute_metrics
 def test_claude_basic_classification(anthropic_client, sentiment_dataset):
     """Claude can classify sentiment correctly"""
 
-    print("\n  🤖 Testing Claude on basic classification...")
+    print("\n  Testing Claude on basic classification...")
 
     test_cases = sentiment_dataset[:5]
 
@@ -25,20 +25,18 @@ def test_claude_basic_classification(anthropic_client, sentiment_dataset):
     correct = sum(1 for p, t in zip(predictions, ground_truth) if p == t)
     accuracy = correct / len(test_cases)
 
-    print(f"\n  📊 Claude Accuracy: {accuracy:.1%} ({correct}/{len(test_cases)})")
+    print(f"\n  Claude Accuracy: {accuracy:.1%} ({correct}/{len(test_cases)})")
 
     assert accuracy >= 0.80, f"Claude accuracy too low: {accuracy:.1%}"
 
-    print("\n✅ PASSED - Claude basic classification working")
+    print("\nPASSED - Claude basic classification working")
 
 
 def test_claude_full_metrics(anthropic_client, sentiment_dataset):
     """Claude performance on full dataset"""
 
-    print(
-        f"\n  🔍 Testing Claude on full dataset ({len(sentiment_dataset)} examples)..."
-    )
-    print("  ⏳ This will take ~30-60 seconds...\n")
+    print(f"\n  Testing Claude on full dataset ({len(sentiment_dataset)} examples)...")
+    print("  This will take ~30-60 seconds...\n")
 
     predictions = []
     ground_truth = []
@@ -58,7 +56,7 @@ def test_claude_full_metrics(anthropic_client, sentiment_dataset):
     metrics = compute_metrics(predictions, ground_truth)
 
     print(f"\n  {'='*60}")
-    print("  📊 CLAUDE METRICS REPORT")
+    print("  CLAUDE METRICS REPORT")
     print(f"  {'='*60}")
     print(f"  Model: {ANTHROPIC_MODEL}")
     print(f"  Accuracy:  {metrics['accuracy']:.3f} ({metrics['accuracy']:.1%})")
@@ -69,9 +67,9 @@ def test_claude_full_metrics(anthropic_client, sentiment_dataset):
 
     # Detailed diagnostic info if performance is poor
     if metrics["f1"] < 0.85:
-        from sklearn.metrics import confusion_matrix, classification_report
+        from sklearn.metrics import classification_report, confusion_matrix
 
-        print("\n  ⚠️  LOW F1-SCORE DETECTED - DIAGNOSTIC ANALYSIS")
+        print("\n  LOW F1-SCORE DETECTED - DIAGNOSTIC ANALYSIS")
         print(f"  {'='*60}\n")
 
         # 1. Per-class breakdown
@@ -131,14 +129,14 @@ def test_claude_full_metrics(anthropic_client, sentiment_dataset):
 
     assert metrics["f1"] > 0.85, f"Claude F1-score too low: {metrics['f1']:.3f}"
 
-    print(f"\n✅ PASSED - Claude F1: {metrics['f1']:.3f}")
+    print(f"\nPASSED - Claude F1: {metrics['f1']:.3f}")
 
 
 def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dataset):
     """Direct comparison between OpenAI and Claude models"""
 
     print(f"\n  {'='*70}")
-    print("  🥊 HEAD-TO-HEAD: OpenAI vs Anthropic")
+    print("  HEAD-TO-HEAD: OpenAI vs Anthropic")
     print(f"  {'='*70}\n")
 
     test_cases = sentiment_dataset
@@ -194,9 +192,9 @@ def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dat
     f1_diff = abs(results[OPENAI_MODEL]["f1"] - results[ANTHROPIC_MODEL]["f1"])
 
     if f1_diff < 0.02:
-        print(f"  🤝 TIE: Both models performed similarly (Δ F1: {f1_diff:.3f})")
+        print(f"  TIE: Both models performed similarly (Δ F1: {f1_diff:.3f})")
     else:
-        print(f"  🏆 WINNER: {best_model[0]} (F1: {best_model[1]['f1']:.3f})")
+        print(f"  WINNER: {best_model[0]} (F1: {best_model[1]['f1']:.3f})")
 
     print(f"  {'='*70}\n")
 
@@ -204,7 +202,7 @@ def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dat
     for model_name, metrics in results.items():
         assert metrics["f1"] > 0.85, f"{model_name} F1 too low: {metrics['f1']:.3f}"
 
-    print("\n✅ PASSED - Comparison complete")
+    print("\nPASSED - Comparison complete")
 
 
 def test_claude_edge_cases(anthropic_client, edge_cases):
@@ -231,9 +229,9 @@ def test_claude_edge_cases(anthropic_client, edge_cases):
 
     success_rate = sum(results) / len(results)
     print(
-        f"\n  📊 Claude edge case success: {success_rate:.1%} ({sum(results)}/{len(results)})"
+        f"\n  Claude edge case success: {success_rate:.1%} ({sum(results)}/{len(results)})"
     )
 
     assert success_rate >= 0.60, f"Edge case success rate too low: {success_rate:.1%}"
 
-    print("\n✅ PASSED - Claude handles edge cases reasonably")
+    print("\nPASSED - Claude handles edge cases reasonably")

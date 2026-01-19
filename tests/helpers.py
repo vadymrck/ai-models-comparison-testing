@@ -1,7 +1,8 @@
 import time
-from openai import RateLimitError
+
 from anthropic import RateLimitError as AnthropicRateLimitError
-from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+from openai import RateLimitError
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 
 def normalize_sentiment(prediction: str) -> str:
@@ -24,7 +25,7 @@ def call_with_delay(client, **kwargs):
             time.sleep(0.15)  # 150ms between calls (~400 RPM max)
             return response
         except RateLimitError as e:
-            print(f"\n⚠️  Rate limit hit, retrying in 1s: {e}")
+            print(f"\nRate limit hit, retrying in 1s: {e}")
             time.sleep(1.0)
 
 
@@ -36,7 +37,7 @@ def call_claude_with_delay(client, **kwargs):
             time.sleep(0.15)  # 150ms between calls
             return response
         except AnthropicRateLimitError as e:
-            print(f"\n⚠️  Rate limit hit, retrying in 1s: {e}")
+            print(f"\nRate limit hit, retrying in 1s: {e}")
             time.sleep(1.0)
 
 

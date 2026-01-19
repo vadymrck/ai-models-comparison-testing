@@ -14,7 +14,7 @@ def test_model_responds(openai_client):
     assert answer is not None, "Model returned None"
     assert len(answer) > 0, "Model returned empty string"
     assert "hello" in answer.lower(), f"Expected 'hello', got: {answer}"
-    print(f"\n✅ PASSED - Model responded: '{answer}'")
+    print(f"\nPASSED - Model responded: '{answer}'")
 
 
 def test_determinism_at_zero_temperature(openai_client):
@@ -39,7 +39,7 @@ def test_determinism_at_zero_temperature(openai_client):
 
     assert "8" in answers[0], f"Wrong math answer: {answers[0]}"
 
-    print(f"\n✅ PASSED - All 3 answers matched: '{answers[0]}'")
+    print(f"\nPASSED - All 3 answers matched: '{answers[0]}'")
 
 
 def test_temperature_affects_creativity(openai_client):
@@ -63,15 +63,15 @@ def test_temperature_affects_creativity(openai_client):
     )
     answer_high = response_high.choices[0].message.content
 
-    print(f"\n  🌡️  Temp=0.0: {answer_low}")
-    print(f"  🌡️  Temp=1.8: {answer_high}")
+    print(f"\n  Temp=0.0: {answer_low}")
+    print(f"   Temp=1.8: {answer_high}")
 
     # They should be different (not guaranteed, but very likely)
     # So we just verify both gave valid responses
     assert len(answer_low) > 0, "Low temp response empty"
     assert len(answer_high) > 0, "High temp response empty"
 
-    print("\n✅ PASSED - Both temperatures produced responses")
+    print("\nPASSED - Both temperatures produced responses")
 
 
 def test_max_tokens_limit(openai_client):
@@ -87,10 +87,10 @@ def test_max_tokens_limit(openai_client):
     answer = response.choices[0].message.content
     word_count = len(answer.split())
 
-    print(f"\n  📏 Response: '{answer}'")
-    print(f"  📊 Word count: {word_count}")
+    print(f"\n  Response: '{answer}'")
+    print(f"  Word count: {word_count}")
 
     # With max_tokens=10, response should be very brief
     assert word_count < 15, f"Response too long: {word_count} words"
 
-    print(f"\n✅ PASSED - Response limited to {word_count} words")
+    print(f"\nPASSED - Response limited to {word_count} words")

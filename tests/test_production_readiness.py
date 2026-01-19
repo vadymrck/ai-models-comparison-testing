@@ -14,7 +14,7 @@ from helpers import call_with_delay, classify_sentiment, normalize_sentiment
 def test_system_prompt_effectiveness(openai_client):
     """System prompt overrides default behavior"""
 
-    print("\n  🎯 Testing system prompt effectiveness...\n")
+    print("\nTesting system prompt effectiveness...\n")
 
     # Custom system prompt enforcing strict format
     test_text = "This product is amazing!"
@@ -68,13 +68,13 @@ def test_system_prompt_effectiveness(openai_client):
         "neutral",
     ], "System prompt should enforce exact format"
 
-    print("\n✅ PASSED - System prompt works effectively")
+    print("\nPASSED - System prompt works effectively")
 
 
 def test_few_shot_learning(openai_client):
     """Few-shot examples improve accuracy on edge cases"""
 
-    print("\n  📚 Testing few-shot learning effectiveness...\n")
+    print("\nTesting few-shot learning effectiveness...\n")
 
     # Tricky edge case: sarcasm
     test_text = "Oh great, another broken product. Just what I needed."
@@ -119,13 +119,13 @@ def test_few_shot_learning(openai_client):
         "negative" in few_shot_pred
     ), f"Few-shot learning should detect sarcasm correctly, got: {few_shot_pred}"
 
-    print("\n✅ PASSED - Few-shot learning works correctly")
+    print("\nPASSED - Few-shot learning works correctly")
 
 
 def test_streaming_response(openai_client):
     """Streaming responses work correctly"""
 
-    print("\n  📡 Testing streaming response handling...\n")
+    print("\nTesting streaming response handling...\n")
 
     test_text = "This is an excellent product that exceeded all my expectations!"
 
@@ -164,13 +164,13 @@ def test_streaming_response(openai_client):
         word in full_response for word in ["positive", "negative", "neutral"]
     ), "Streaming should produce valid classification"
 
-    print(f"\n✅ PASSED - Streaming works correctly with {len(chunks)} chunks")
+    print(f"\nPASSED - Streaming works correctly with {len(chunks)} chunks")
 
 
 def test_cross_model_agreement_on_clear_cases(openai_client, anthropic_client):
     """All models should agree on obvious cases"""
 
-    print("\n  🤝 Testing cross-model agreement on clear cases...\n")
+    print("\nTesting cross-model agreement on clear cases...\n")
 
     # Obviously positive and negative cases
     clear_cases = [
@@ -216,17 +216,17 @@ def test_cross_model_agreement_on_clear_cases(openai_client, anthropic_client):
         ), f"Models disagree on obvious case: '{case['text'][:50]}' - GPT={predictions[0]}, Claude={predictions[1]}"
 
         agreements += 1
-        print("     ✓ Both models agree and correct")
+        print("     Both models agree and correct")
 
-    print(f"\n  📊 Cross-model agreement: 100% ({agreements}/{total_cases})")
+    print(f"\nCross-model agreement: 100% ({agreements}/{total_cases})")
 
-    print("\n✅ PASSED - Models show good agreement")
+    print("\nPASSED - Models show good agreement")
 
 
 def test_robustness_to_input_variations(openai_client):
     """Same sentiment, different formats should give same result"""
 
-    print("\n  🔄 Testing robustness to input variations...\n")
+    print("\n  Testing robustness to input variations...\n")
 
     # Same sentiment expressed differently
     variations = [
@@ -249,9 +249,9 @@ def test_robustness_to_input_variations(openai_client):
     all_positive = all(p == "positive" for p in predictions)
     unique_predictions = len(set(predictions))
 
-    print(f"\n  📊 Consistency: {unique_predictions} unique prediction(s)")
+    print(f"\n  Consistency: {unique_predictions} unique prediction(s)")
 
     assert all_positive, "All variations should be classified as positive"
     assert unique_predictions == 1, "Should be consistent across formatting"
 
-    print("\n✅ PASSED - Robust to input variations")
+    print("\nPASSED - Robust to input variations")
