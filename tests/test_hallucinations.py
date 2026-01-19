@@ -36,7 +36,7 @@ def test_refuses_impossible_question(openai_client):
     assert found_refusal, f"Model should refuse impossible question, but said: {answer}"
 
     print("  ✓ Model correctly handled impossible question")
-    print("\nPASSED - Refused impossible historical fact")
+    # ...removed verbose PASSED print...
 
 
 def test_consistency_across_phrasings(openai_client):
@@ -72,7 +72,7 @@ def test_consistency_across_phrasings(openai_client):
     ), f"Only {paris_count}/{len(questions)} answers mentioned Paris: {answers}"
 
     print(f"\n  ✓ All {len(questions)} phrasings correctly answered 'Paris'")
-    print("\nPASSED - Consistent across all phrasings")
+    # ...removed verbose PASSED print...
 
 
 def test_detects_fake_historical_event(openai_client):
@@ -127,7 +127,7 @@ def test_detects_fake_historical_event(openai_client):
     else:
         print("  ✓ Model showed appropriate uncertainty")
 
-    print("\nPASSED - Handled fake date appropriately")
+    # ...removed verbose PASSED print...
 
 
 def test_refuses_to_invent_citation(openai_client):
@@ -177,7 +177,7 @@ def test_refuses_to_invent_citation(openai_client):
     ), f"Model should show caution about non-existent paper, but said: {answer}"
 
     print("  ✓ Model appropriately refused to cite fake paper")
-    print("\nPASSED - Did not invent fake citation")
+    # ...removed verbose PASSED print...
 
 
 def test_math_consistency(openai_client):
@@ -214,4 +214,4 @@ def test_math_consistency(openai_client):
         assert is_correct, f"Wrong math: {question} should be {expected}, got {answer}"
 
     print(f"\n  ✓ All {len(problems)} math problems correct")
-    print("\nPASSED - Math is consistent")
+    # ...removed verbose PASSED print...

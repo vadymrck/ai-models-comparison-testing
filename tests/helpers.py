@@ -111,6 +111,27 @@ def compute_metrics(predictions, ground_truth):
     }
 
 
+def format_failures(failures, limit=5):
+    """
+    Format failure details for assertion messages.
+
+    Args:
+        failures: List of dicts with 'text', 'predicted', 'expected' keys
+        limit: Max number of failures to show
+
+    Returns:
+        str: Formatted failure details
+    """
+    lines = []
+    for f in failures[:limit]:
+        text = f.get("text", "")[:50]
+        lines.append(f"  {f['predicted']} != {f['expected']}: {text}...")
+    remaining = len(failures) - limit
+    if remaining > 0:
+        lines.append(f"  ... and {remaining} more")
+    return "\n".join(lines)
+
+
 def calculate_cost(input_tokens, output_tokens, model):
     """
     Calculate API cost based on token usage and model pricing.
