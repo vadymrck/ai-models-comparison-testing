@@ -111,6 +111,91 @@ def compute_metrics(predictions, ground_truth):
     }
 
 
+def map_dataset_to_cases(dataset):
+    """Convert dataset items (with 'label') to test cases (with 'expected')."""
+    return [{"text": item["text"], "expected": item["label"]} for item in dataset]
+
+
+def classify_cases(client, model, cases, provider="openai"):
+    """
+    Classify test cases and return success rate and failures.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        cases: List of dicts with 'text' and 'expected' keys
+               (expected can be string or list of acceptable values)
+        provider: "openai" or "anthropic"
+
+    Returns:
+        tuple: (success_rate, failures list)
+    """
+    failures = []
+    for case in cases:
+        prediction = classify_sentiment(client, model, case["text"], provider=provider)
+        expected = case["expected"]
+        is_correct = (
+            prediction == expected
+            if isinstance(expected, str)
+            else prediction in expected
+        )
+        if not is_correct:
+            failures.append(
+                {
+                    "text": case["text"],
+                    "predicted": prediction,
+                    "expected": str(expected),
+                }
+            )
+
+    success_rate = (len(cases) - len(failures)) / len(cases)
+    return success_rate, failures
+
+
+def classify_dataset(client, model, dataset, provider="openai"):
+    """
+    Classify a dataset and return full metrics.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        dataset: List of dicts with 'text' and 'label' keys
+        provider: "openai" or "anthropic"
+
+    Returns:
+        dict with accuracy, precision, recall, f1, predictions, ground_truth, failures
+    """
+    predictions = []
+    ground_truth = []
+    failures = []
+
+    for case in dataset:
+        prediction = classify_sentiment(client, model, case["text"], provider=provider)
+        predictions.append(prediction)
+        ground_truth.append(case["label"])
+
+        if prediction != case["label"]:
+            failures.append(
+                {
+                    "text": case["text"],
+                    "predicted": prediction,
+                    "expected": case["label"],
+                }
+            )
+
+    metrics = compute_metrics(predictions, ground_truth)
+
+    return {
+        "accuracy": metrics["accuracy"],
+        "precision": metrics["precision"],
+        "recall": metrics["recall"],
+        "f1": metrics["f1"],
+        "predictions": predictions,
+        "ground_truth": ground_truth,
+        "failures": failures,
+    }
+
+
 def format_failures(failures, limit=5):
     """
     Format failure details for assertion messages.

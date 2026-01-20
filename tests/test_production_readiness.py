@@ -8,7 +8,13 @@ Production-readiness tests:
 """
 
 from config import ANTHROPIC_MODEL, OPENAI_MODEL
-from helpers import call_with_delay, classify_sentiment, normalize_sentiment
+from helpers import (
+    call_with_delay,
+    classify_cases,
+    classify_sentiment,
+    format_failures,
+    normalize_sentiment,
+)
 
 
 def test_system_prompt_effectiveness(openai_client):
@@ -200,35 +206,17 @@ def test_cross_model_agreement_on_clear_cases(openai_client, anthropic_client):
 def test_robustness_to_input_variations(openai_client):
     """Same sentiment, different formats should give same result"""
 
-    # Same sentiment expressed differently
     variations = [
-        "This product is excellent!",
-        "THIS PRODUCT IS EXCELLENT!",
-        "this product is excellent!",
-        "This    product    is    excellent!",
-        "This product is excellent!!!",
-        "This. Product. Is. Excellent.",
+        {"text": "This product is excellent!", "expected": "positive"},
+        {"text": "THIS PRODUCT IS EXCELLENT!", "expected": "positive"},
+        {"text": "this product is excellent!", "expected": "positive"},
+        {"text": "This    product    is    excellent!", "expected": "positive"},
+        {"text": "This product is excellent!!!", "expected": "positive"},
+        {"text": "This. Product. Is. Excellent.", "expected": "positive"},
     ]
 
-    predictions = []
-    failures = []
+    success_rate, failures = classify_cases(openai_client, OPENAI_MODEL, variations)
 
-    for text in variations:
-        pred = classify_sentiment(openai_client, OPENAI_MODEL, text)
-        predictions.append(pred)
-        if pred != "positive":
-            failures.append({"text": text, "predicted": pred, "expected": "positive"})
-
-    # All should be positive
-    all_positive = all(p == "positive" for p in predictions)
-    unique_predictions = len(set(predictions))
-
-    # Format failure details
-    failure_details = ""
-    if failures:
-        failure_details = "\n" + "\n".join(
-            f"  '{f['text']}': {f['predicted']} != positive" for f in failures
-        )
-
-    assert all_positive, f"Not all variations classified as positive:{failure_details}"
-    assert unique_predictions == 1, f"Inconsistent predictions: {set(predictions)}"
+    assert (
+        success_rate == 1.0
+    ), f"Input variations: {success_rate:.1%}\n{format_failures(failures)}"

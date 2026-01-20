@@ -14,9 +14,12 @@ import pytest
 from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
 from helpers import (
     call_with_delay,
+    classify_cases,
+    classify_dataset,
     classify_sentiment,
     compute_metrics,
     format_failures,
+    map_dataset_to_cases,
 )
 from sklearn.metrics import precision_recall_fscore_support
 
@@ -24,63 +27,32 @@ from sklearn.metrics import precision_recall_fscore_support
 def test_sentiment_classification_basic(openai_client, sentiment_dataset):
     """Model can classify sentiment correctly"""
 
-    test_cases = sentiment_dataset[:5]
-    failures = []
+    cases = map_dataset_to_cases(sentiment_dataset[:5])
+    success_rate, failures = classify_cases(openai_client, OPENAI_MODEL, cases)
 
-    for case in test_cases:
-        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
-        actual = case["label"]
-        if prediction != actual:
-            failures.append(
-                {"text": case["text"], "predicted": prediction, "expected": actual}
-            )
-
-    accuracy = (len(test_cases) - len(failures)) / len(test_cases)
-    assert accuracy >= 0.80, f"Accuracy {accuracy:.2%}\n{format_failures(failures)}"
+    assert (
+        success_rate >= 0.80
+    ), f"Accuracy {success_rate:.2%}\n{format_failures(failures)}"
 
 
 def test_sentiment_classification_full_metrics(openai_client, sentiment_dataset):
     """Compute precision, recall, F1 on full dataset"""
 
-    predictions = []
-    ground_truth = []
-    failures = []
-
-    for case in sentiment_dataset:
-        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
-        predictions.append(prediction)
-        ground_truth.append(case["label"])
-        if prediction != case["label"]:
-            failures.append(
-                {
-                    "text": case["text"],
-                    "predicted": prediction,
-                    "expected": case["label"],
-                }
-            )
-
-    metrics = compute_metrics(predictions, ground_truth)
+    result = classify_dataset(openai_client, OPENAI_MODEL, sentiment_dataset)
 
     assert (
-        metrics["accuracy"] > 0.85
-    ), f"Accuracy {metrics['accuracy']:.3f}\n{format_failures(failures)}"
+        result["accuracy"] > 0.85
+    ), f"Accuracy {result['accuracy']:.3f}\n{format_failures(result['failures'])}"
     assert (
-        metrics["f1"] > 0.85
-    ), f"F1-score {metrics['f1']:.3f}\n{format_failures(failures)}"
+        result["f1"] > 0.85
+    ), f"F1-score {result['f1']:.3f}\n{format_failures(result['failures'])}"
 
 
 def test_per_class_metrics(openai_client, sentiment_dataset):
     """Analyze performance per sentiment class"""
 
-    predictions = []
-    ground_truth = []
-
-    for case in sentiment_dataset:
-        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
-        predictions.append(prediction)
-        ground_truth.append(case["label"])
-
-    metrics = compute_metrics(predictions, ground_truth)
+    result = classify_dataset(openai_client, OPENAI_MODEL, sentiment_dataset)
+    metrics = compute_metrics(result["predictions"], result["ground_truth"])
 
     _, _, f1, _ = precision_recall_fscore_support(
         metrics["y_true"], metrics["y_pred"], labels=[0, 1, 2], zero_division=0
@@ -89,7 +61,6 @@ def test_per_class_metrics(openai_client, sentiment_dataset):
     classes = ["Positive", "Negative", "Neutral"]
     min_f1 = min(f1)
 
-    # Build detailed message for assertion
     class_details = "\n".join(
         f"  {classes[i]}: F1={f1[i]:.3f}" for i in range(len(classes))
     )
@@ -105,17 +76,8 @@ def model_name(request):
 def test_compare_models(openai_client, sentiment_dataset, model_name):
     """Compare performance across different models"""
 
-    test_cases = sentiment_dataset[:15]
-    predictions = []
-    ground_truth = []
-
-    for case in test_cases:
-        prediction = classify_sentiment(openai_client, model_name, case["text"])
-        predictions.append(prediction)
-        ground_truth.append(case["label"])
-
-    metrics = compute_metrics(predictions, ground_truth)
-    assert metrics["f1"] > 0.85, f"{model_name} F1={metrics['f1']:.3f}"
+    result = classify_dataset(openai_client, model_name, sentiment_dataset[:15])
+    assert result["f1"] > 0.85, f"{model_name} F1={result['f1']:.3f}"
 
 
 @pytest.fixture(params=[0.0, 0.5, 1.0])
@@ -167,19 +129,8 @@ def test_classification_latency(openai_client, sentiment_dataset):
 def test_edge_cases(openai_client, edge_cases):
     """Test classification on edge cases and tricky examples"""
 
-    failures = []
-    for case in edge_cases:
-        prediction = classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
-        if prediction not in case["expected"]:
-            failures.append(
-                {
-                    "text": case["text"],
-                    "predicted": prediction,
-                    "expected": str(case["expected"]),
-                }
-            )
-
-    success_rate = (len(edge_cases) - len(failures)) / len(edge_cases)
+    # edge_cases uses 'expected' key with list of acceptable values
+    success_rate, failures = classify_cases(openai_client, OPENAI_MODEL, edge_cases)
     assert success_rate >= 0.60, f"{success_rate:.1%}\n{format_failures(failures)}"
 
 
