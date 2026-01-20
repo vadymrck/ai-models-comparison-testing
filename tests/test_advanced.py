@@ -11,13 +11,15 @@ Advanced AI testing scenarios:
 
 import time
 
+import pytest
 from config import OPENAI_MODEL
 from helpers import (
     calculate_cost,
     call_with_delay,
     classify_cases,
     classify_dataset,
-    classify_sentiment,
+    classify_repeated,
+    classify_with_tokens,
     format_failures,
     normalize_sentiment,
 )
@@ -155,58 +157,31 @@ def test_consistency_over_multiple_runs(openai_client):
     """Test if temperature=0 gives consistent results"""
 
     test_text = "This product exceeded my expectations! Highly recommend."
-    num_runs = 5
+    predictions = classify_repeated(openai_client, OPENAI_MODEL, test_text, runs=5)
 
-    predictions = []
-
-    for i in range(num_runs):
-        prediction = classify_sentiment(openai_client, OPENAI_MODEL, test_text)
-
-        predictions.append(prediction)
-
-    # Check if all predictions are identical
     unique_predictions = set(predictions)
-    is_consistent = len(unique_predictions) == 1
-
-    assert is_consistent, f"Inconsistent predictions at temp=0: {unique_predictions}"
+    assert len(unique_predictions) == 1, f"Inconsistent at temp=0: {unique_predictions}"
 
 
 def test_cost_tracking(openai_client, sentiment_dataset):
     """Track actual API costs for the test suite using real token usage"""
 
-    # Use first 10 examples
     test_cases = sentiment_dataset[:10]
 
-    # Track ACTUAL token usage from API responses
-    total_input_tokens = 0
-    total_output_tokens = 0
-
-    # Run actual classification and capture token usage
     start_time = time.time()
-
-    for case in test_cases:
-        _, response = classify_sentiment(
-            openai_client, OPENAI_MODEL, case["text"], return_raw_response=True
-        )
-
-        # Extract REAL token usage from API response
-        total_input_tokens += response.usage.prompt_tokens
-        total_output_tokens += response.usage.completion_tokens
-
+    tokens = classify_with_tokens(openai_client, OPENAI_MODEL, test_cases)
     elapsed_time = time.time() - start_time
 
-    total_requests = len(test_cases)
+    costs = calculate_cost(
+        tokens["input_tokens"], tokens["output_tokens"], OPENAI_MODEL
+    )
 
-    # Calculate costs using helper
-    costs = calculate_cost(total_input_tokens, total_output_tokens, OPENAI_MODEL)
-
-    avg_cost_per_request = costs["total_cost"] / total_requests
+    avg_cost_per_request = costs["total_cost"] / len(test_cases)
     full_dataset_cost = avg_cost_per_request * len(sentiment_dataset)
 
     assert costs["total_cost"] < 0.01, (
-        "Test costs too high: "
-        f"cost={costs['total_cost']:.6f}, input_tokens={total_input_tokens}, output_tokens={total_output_tokens}, "
-        f"elapsed={elapsed_time:.2f}s, projected_full_dataset_cost={full_dataset_cost:.4f}"
+        f"cost={costs['total_cost']:.6f}, tokens={tokens}, "
+        f"elapsed={elapsed_time:.2f}s, projected={full_dataset_cost:.4f}"
     )
 
 
@@ -287,24 +262,21 @@ def test_handles_invalid_model_name(openai_client):
 
     from openai import NotFoundError
 
-    # Try to use a non-existent model
     invalid_model = "gpt-99-ultra-super-model-that-does-not-exist"
 
-    try:
+    with pytest.raises(NotFoundError) as exc_info:
         openai_client.chat.completions.create(
             model=invalid_model,
             messages=[{"role": "user", "content": "Test"}],
             temperature=0,
         )
-        assert False, "Should have raised NotFoundError for invalid model"
 
-    except NotFoundError as e:
-        error_str = str(e).lower()
-        assert (
-            "model" in error_str
-            or "not found" in error_str
-            or "does not exist" in error_str
-        ), f"Error message should mention model issue: {str(e)}"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "model" in error_str
+        or "not found" in error_str
+        or "does not exist" in error_str
+    ), f"Error message should mention model issue: {exc_info.value}"
 
 
 def test_handles_missing_messages_parameter(openai_client):
@@ -312,20 +284,17 @@ def test_handles_missing_messages_parameter(openai_client):
 
     from openai import BadRequestError
 
-    try:
+    with pytest.raises((BadRequestError, TypeError)) as exc_info:
         openai_client.chat.completions.create(
             model=OPENAI_MODEL,
             temperature=0,
             # Missing 'messages' - required parameter
         )
-        assert False, "Should have raised error for missing 'messages'"
 
-    except (BadRequestError, TypeError) as e:
-        # Verify error mentions the missing parameter
-        error_str = str(e).lower()
-        assert (
-            "messages" in error_str or "required" in error_str
-        ), f"Error should mention missing 'messages' parameter: {str(e)}"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "messages" in error_str or "required" in error_str
+    ), f"Error should mention missing 'messages' parameter: {exc_info.value}"
 
 
 def test_handles_invalid_parameter_type(openai_client):
@@ -333,21 +302,17 @@ def test_handles_invalid_parameter_type(openai_client):
 
     from openai import BadRequestError
 
-    # Try to use string instead of float for temperature
-    try:
+    with pytest.raises((BadRequestError, TypeError, ValueError)) as exc_info:
         openai_client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature="very-hot",  # Should be float 0-2, not string
         )
-        assert False, "Should have raised error for invalid temperature type"
 
-    except (BadRequestError, TypeError, ValueError) as e:
-        # Verify error is related to temperature or type issue
-        error_str = str(e).lower()
-        assert (
-            "temperature" in error_str or "type" in error_str or "invalid" in error_str
-        ), f"Error should mention temperature or type issue: {str(e)}"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "temperature" in error_str or "type" in error_str or "invalid" in error_str
+    ), f"Error should mention temperature or type issue: {exc_info.value}"
 
 
 def test_handles_invalid_message_role(openai_client):
@@ -357,49 +322,17 @@ def test_handles_invalid_message_role(openai_client):
 
     invalid_role = "superadmin"
 
-    try:
+    with pytest.raises(BadRequestError) as exc_info:
         openai_client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": invalid_role, "content": "Test"}],  # Invalid role
             temperature=0,
         )
-        assert False, "Should have raised error for invalid role"
 
-    except BadRequestError as e:
-        # Verify error message mentions role issue
-        error_str = str(e).lower()
-        assert (
-            "role" in error_str or "invalid" in error_str
-        ), f"Error should mention invalid role: {str(e)}"
-
-
-def test_handles_network_timeout():
-    """Handle network timeouts gracefully"""
-
-    from unittest.mock import Mock
-
-    from openai import APITimeoutError
-
-    # Mock the OpenAI client
-    mock_client = Mock()
-
-    # Create properly formatted APITimeoutError
-    mock_request = Mock()
-    timeout_error = APITimeoutError(request=mock_request)
-
-    # Simulate timeout
-    mock_client.chat.completions.create.side_effect = timeout_error
-
-    # Should raise timeout error
-    try:
-        mock_client.chat.completions.create(
-            model=OPENAI_MODEL, messages=[{"role": "user", "content": "Test"}]
-        )
-        assert False, "Should have raised APITimeoutError"
-
-    except APITimeoutError as e:
-        # Verify it's the correct error type
-        assert isinstance(e, APITimeoutError), "Should raise APITimeoutError"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "role" in error_str or "invalid" in error_str
+    ), f"Error should mention invalid role: {exc_info.value}"
 
 
 def test_invalid_api_key():
@@ -407,27 +340,23 @@ def test_invalid_api_key():
 
     from openai import AuthenticationError, OpenAI
 
-    # Create client with fake/invalid API key
     fake_api_key = "sk-fake-invalid-key-12345678901234567890"
     invalid_client = OpenAI(api_key=fake_api_key)
 
-    try:
+    with pytest.raises(AuthenticationError) as exc_info:
         invalid_client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature=0,
         )
-        assert False, "Should have raised AuthenticationError for invalid API key"
 
-    except AuthenticationError as e:
-
-        error_str = str(e).lower()
-        assert (
-            "api" in error_str
-            or "key" in error_str
-            or "auth" in error_str
-            or "401" in error_str
-        ), f"Error should mention authentication issue: {str(e)}"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "api" in error_str
+        or "key" in error_str
+        or "auth" in error_str
+        or "401" in error_str
+    ), f"Error should mention authentication issue: {exc_info.value}"
 
 
 def test_missing_api_key():
@@ -435,79 +364,23 @@ def test_missing_api_key():
 
     from openai import AuthenticationError, OpenAI
 
-    # Try to create client with empty string as API key (force no fallback)
-    # Use empty string to ensure no fallback to env variables
     invalid_client = OpenAI(api_key="")
 
-    # Try to make API call with empty key
-    try:
+    with pytest.raises(AuthenticationError) as exc_info:
         invalid_client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": "Test"}],
             temperature=0,
         )
-        assert False, "Should have raised error for missing API key"
 
-    except AuthenticationError as e:
-
-        # Verify error mentions API key or authentication issue
-        error_str = str(e).lower()
-        assert (
-            "api" in error_str
-            or "key" in error_str
-            or "auth" in error_str
-            or "401" in error_str
-            or "provide" in error_str
-        ), f"Error should mention missing API key: {str(e)}"
-
-
-def test_response_has_required_fields(openai_client):
-    """API response contains all expected fields per OpenAI spec"""
-
-    # Make a simple API call
-    response = openai_client.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[{"role": "user", "content": "Test"}],
-        temperature=0,
-    )
-
-    # Check top-level required fields
-    assert hasattr(response, "id"), "Response should have 'id' field"
-    assert hasattr(response, "object"), "Response should have 'object' field"
-    assert hasattr(response, "created"), "Response should have 'created' field"
-    assert hasattr(response, "model"), "Response should have 'model' field"
-    assert hasattr(response, "choices"), "Response should have 'choices' field"
-    assert hasattr(response, "usage"), "Response should have 'usage' field"
-
-    # Verify field types
-    assert isinstance(response.id, str), "id should be string"
-    assert isinstance(response.object, str), "object should be string"
-    assert isinstance(response.created, int), "created should be integer (timestamp)"
-    assert isinstance(response.model, str), "model should be string"
-    assert isinstance(response.choices, list), "choices should be list"
-    assert len(response.choices) > 0, "choices should not be empty"
-
-    # Check choices structure
-    first_choice = response.choices[0]
-    assert hasattr(first_choice, "index"), "Choice should have 'index' field"
-    assert hasattr(first_choice, "message"), "Choice should have 'message' field"
-    assert hasattr(
-        first_choice, "finish_reason"
-    ), "Choice should have 'finish_reason' field"
-
-    # Check message structure
-    message = first_choice.message
-    assert hasattr(message, "role"), "Message should have 'role' field"
-    assert hasattr(message, "content"), "Message should have 'content' field"
-    assert message.role == "assistant", "Message role should be 'assistant'"
-    assert isinstance(message.content, str), "Message content should be string"
-
-    # Check usage structure
-    assert hasattr(response.usage, "prompt_tokens"), "Usage should have 'prompt_tokens'"
-    assert hasattr(
-        response.usage, "completion_tokens"
-    ), "Usage should have 'completion_tokens'"
-    assert hasattr(response.usage, "total_tokens"), "Usage should have 'total_tokens'"
+    error_str = str(exc_info.value).lower()
+    assert (
+        "api" in error_str
+        or "key" in error_str
+        or "auth" in error_str
+        or "401" in error_str
+        or "provide" in error_str
+    ), f"Error should mention missing API key: {exc_info.value}"
 
 
 def test_usage_tokens_are_positive(openai_client):

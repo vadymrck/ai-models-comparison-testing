@@ -10,7 +10,7 @@ from datetime import datetime
 
 import pytest
 from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
-from helpers import calculate_cost, call_with_delay, classify_sentiment
+from helpers import calculate_cost, call_with_delay, classify_sentiment, classify_with_tokens
 
 
 def test_response_time_benchmark(openai_client, sentiment_dataset):
@@ -179,28 +179,13 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     """Track token usage across tests"""
 
     test_cases = sentiment_dataset[:10]
+    tokens = classify_with_tokens(openai_client, OPENAI_MODEL, test_cases)
 
-    total_prompt_tokens = 0
-    total_completion_tokens = 0
-    total_tokens = 0
-
-    for case in test_cases:
-        _, response = classify_sentiment(
-            openai_client, OPENAI_MODEL, case["text"], return_raw_response=True
-        )
-
-        # Extract token usage
-        usage = response.usage
-        total_prompt_tokens += usage.prompt_tokens
-        total_completion_tokens += usage.completion_tokens
-        total_tokens += usage.total_tokens
-
+    total_tokens = tokens["input_tokens"] + tokens["output_tokens"]
     avg_total = total_tokens / len(test_cases)
 
-    # Calculate cost using helper
-    costs = calculate_cost(total_prompt_tokens, total_completion_tokens, OPENAI_MODEL)
+    costs = calculate_cost(tokens["input_tokens"], tokens["output_tokens"], OPENAI_MODEL)
 
-    # Save token tracking
     token_data = {
         "timestamp": datetime.now().isoformat(),
         "model": OPENAI_MODEL,
@@ -215,7 +200,6 @@ def test_token_usage_tracking(openai_client, sentiment_dataset):
     with open("reports/token_usage.json", "w") as f:
         json.dump(token_data, f, indent=2)
 
-    # Assert reasonable token usage
     assert avg_total < 50, f"Token usage too high: {avg_total:.1f}"
 
 

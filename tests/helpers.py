@@ -196,6 +196,51 @@ def classify_dataset(client, model, dataset, provider="openai"):
     }
 
 
+def classify_repeated(client, model, text, runs=5, provider="openai"):
+    """
+    Classify the same text multiple times to test consistency.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        text: Text to classify repeatedly
+        runs: Number of times to classify
+        provider: "openai" or "anthropic"
+
+    Returns:
+        list of predictions
+    """
+    return [
+        classify_sentiment(client, model, text, provider=provider) for _ in range(runs)
+    ]
+
+
+def classify_with_tokens(client, model, dataset, provider="openai"):
+    """
+    Classify dataset and return token usage totals.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        dataset: List of dicts with 'text' key
+        provider: "openai" or "anthropic"
+
+    Returns:
+        dict with input_tokens and output_tokens
+    """
+    total_input = 0
+    total_output = 0
+
+    for case in dataset:
+        _, response = classify_sentiment(
+            client, model, case["text"], provider=provider, return_raw_response=True
+        )
+        total_input += response.usage.prompt_tokens
+        total_output += response.usage.completion_tokens
+
+    return {"input_tokens": total_input, "output_tokens": total_output}
+
+
 def format_failures(failures, limit=5):
     """
     Format failure details for assertion messages.
