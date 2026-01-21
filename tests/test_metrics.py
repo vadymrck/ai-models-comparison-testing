@@ -106,6 +106,25 @@ def test_edge_cases(openai_client, edge_cases):
     assert success_rate >= 0.60, f"{success_rate:.1%}\n{format_failures(failures)}"
 
 
+def test_robustness_to_input_variations(openai_client):
+    """Same sentiment, different formats should give same result"""
+
+    variations = [
+        {"text": "This product is excellent!", "expected": "positive"},
+        {"text": "THIS PRODUCT IS EXCELLENT!", "expected": "positive"},
+        {"text": "this product is excellent!", "expected": "positive"},
+        {"text": "This    product    is    excellent!", "expected": "positive"},
+        {"text": "This product is excellent!!!", "expected": "positive"},
+        {"text": "This. Product. Is. Excellent.", "expected": "positive"},
+    ]
+
+    success_rate, failures = classify_cases(openai_client, OPENAI_MODEL, variations)
+
+    assert (
+        success_rate == 1.0
+    ), f"Input variations: {success_rate:.1%}\n{format_failures(failures)}"
+
+
 def test_batch_processing(openai_client, sentiment_dataset):
     """Measure efficiency of batch classification"""
 
