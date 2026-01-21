@@ -1,9 +1,10 @@
-import pytest
-import os
 import json
-from openai import OpenAI
+import os
+
+import pytest
 from anthropic import Anthropic
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 

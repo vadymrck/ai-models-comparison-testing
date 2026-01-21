@@ -1,4 +1,5 @@
 import time
+from typing import Any
 
 from anthropic import RateLimitError as AnthropicRateLimitError
 from openai import RateLimitError
@@ -17,7 +18,7 @@ def normalize_sentiment(prediction: str) -> str:
     return prediction
 
 
-def call_with_delay(client, **kwargs):
+def call_with_delay(client: Any, **kwargs: Any) -> Any:
     """Call OpenAI API with a delay to avoid rate limits."""
     while True:
         try:
@@ -29,7 +30,7 @@ def call_with_delay(client, **kwargs):
             time.sleep(1.0)
 
 
-def call_claude_with_delay(client, **kwargs):
+def call_claude_with_delay(client: Any, **kwargs: Any) -> Any:
     """Call Anthropic Claude API with a delay to avoid rate limits."""
     while True:
         try:
@@ -42,8 +43,13 @@ def call_claude_with_delay(client, **kwargs):
 
 
 def classify_sentiment(
-    client, model, text, temperature=0, provider="openai", return_raw_response=False
-):
+    client: Any,
+    model: str,
+    text: str,
+    temperature: float = 0,
+    provider: str = "openai",
+    return_raw_response: bool = False,
+) -> str | tuple[str, Any]:
     """
     Classify sentiment using OpenAI or Anthropic API.
     Returns normalized prediction: 'positive', 'negative', or 'neutral'.
@@ -87,7 +93,7 @@ def classify_sentiment(
     return normalized
 
 
-def compute_metrics(predictions, ground_truth):
+def compute_metrics(predictions: list[str], ground_truth: list[str]) -> dict[str, Any]:
     """
     Compute classification metrics from predictions and ground truth.
     Returns dict with accuracy, precision, recall, F1, and numeric labels.
@@ -111,12 +117,14 @@ def compute_metrics(predictions, ground_truth):
     }
 
 
-def map_dataset_to_cases(dataset):
+def map_dataset_to_cases(dataset: list[dict]) -> list[dict]:
     """Convert dataset items (with 'label') to test cases (with 'expected')."""
     return [{"text": item["text"], "expected": item["label"]} for item in dataset]
 
 
-def classify_cases(client, model, cases, provider="openai"):
+def classify_cases(
+    client: Any, model: str, cases: list[dict], provider: str = "openai"
+) -> tuple[float, list[dict]]:
     """
     Classify test cases and return success rate and failures.
 
@@ -152,7 +160,13 @@ def classify_cases(client, model, cases, provider="openai"):
     return success_rate, failures
 
 
-def classify_dataset(client, model, dataset, provider="openai", temperature=0):
+def classify_dataset(
+    client: Any,
+    model: str,
+    dataset: list[dict],
+    provider: str = "openai",
+    temperature: float = 0,
+) -> dict[str, Any]:
     """
     Classify a dataset and return full metrics.
 
@@ -199,7 +213,9 @@ def classify_dataset(client, model, dataset, provider="openai", temperature=0):
     }
 
 
-def classify_repeated(client, model, text, runs=5, provider="openai"):
+def classify_repeated(
+    client: Any, model: str, text: str, runs: int = 5, provider: str = "openai"
+) -> list[str]:
     """
     Classify the same text multiple times to test consistency.
 
@@ -218,7 +234,9 @@ def classify_repeated(client, model, text, runs=5, provider="openai"):
     ]
 
 
-def measure_latencies(client, model, dataset, provider="openai"):
+def measure_latencies(
+    client: Any, model: str, dataset: list[dict], provider: str = "openai"
+) -> list[float]:
     """
     Measure classification latency for each item in dataset.
 
@@ -231,8 +249,6 @@ def measure_latencies(client, model, dataset, provider="openai"):
     Returns:
         list of latencies in seconds
     """
-    import time
-
     latencies = []
     for case in dataset:
         start = time.time()
@@ -241,7 +257,9 @@ def measure_latencies(client, model, dataset, provider="openai"):
     return latencies
 
 
-def classify_batch(client, model, dataset, batch_size=5):
+def classify_batch(
+    client: Any, model: str, dataset: list[dict], batch_size: int = 5
+) -> dict[str, Any]:
     """
     Classify multiple items in a single prompt (batch classification).
 
@@ -284,7 +302,9 @@ def classify_batch(client, model, dataset, batch_size=5):
     }
 
 
-def classify_with_tokens(client, model, dataset, provider="openai"):
+def classify_with_tokens(
+    client: Any, model: str, dataset: list[dict], provider: str = "openai"
+) -> dict[str, int]:
     """
     Classify dataset and return token usage totals.
 
@@ -310,7 +330,7 @@ def classify_with_tokens(client, model, dataset, provider="openai"):
     return {"input_tokens": total_input, "output_tokens": total_output}
 
 
-def format_failures(failures, limit=5):
+def format_failures(failures: list[dict], limit: int = 5) -> str:
     """
     Format failure details for assertion messages.
 
@@ -331,12 +351,14 @@ def format_failures(failures, limit=5):
     return "\n".join(lines)
 
 
-def get_response(client, model, prompt, provider="openai"):
+def get_response(client: Any, model: str, prompt: str, provider: str = "openai") -> str:
     """Send a single prompt and return lowercased response."""
     return collect_responses(client, model, [prompt], provider)[0]
 
 
-def collect_responses(client, model, prompts, provider="openai"):
+def collect_responses(
+    client: Any, model: str, prompts: list[str], provider: str = "openai"
+) -> list[str]:
     """
     Send multiple prompts and collect responses.
 
@@ -371,7 +393,12 @@ def collect_responses(client, model, prompts, provider="openai"):
     return responses
 
 
-def verify_qa_pairs(client, model, qa_pairs, provider="openai"):
+def verify_qa_pairs(
+    client: Any,
+    model: str,
+    qa_pairs: list[tuple[str, str]],
+    provider: str = "openai",
+) -> tuple[float, list[dict]]:
     """
     Verify question-answer pairs where expected value should be contained in response.
 
@@ -413,7 +440,9 @@ def verify_qa_pairs(client, model, qa_pairs, provider="openai"):
     return success_rate, failures
 
 
-def calculate_cost(input_tokens, output_tokens, model):
+def calculate_cost(
+    input_tokens: int, output_tokens: int, model: str
+) -> dict[str, float]:
     """
     Calculate API cost based on token usage and model pricing.
 
