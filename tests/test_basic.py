@@ -7,6 +7,7 @@ Basic model behavior tests:
 """
 
 from config import OPENAI_MODEL
+from helpers import collect_responses
 
 
 def test_model_responds(openai_client):
@@ -25,22 +26,9 @@ def test_determinism_at_zero_temperature(openai_client):
     """Same input at temp=0 gives same output"""
 
     prompt = "What is 5 + 3? Answer with only the number."
-    answers = []
+    answers = collect_responses(openai_client, OPENAI_MODEL, [prompt] * 3)
 
-    # Ask the same question 3 times
-    for i in range(3):
-        response = openai_client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-        )
-        answer = response.choices[0].message.content.strip()
-        answers.append(answer)
-        print(f"  Attempt {i+1}: {answer}")
-
-    # All 3 answers should be identical
     assert answers[0] == answers[1] == answers[2], f"Answers differ: {answers}"
-
     assert "8" in answers[0], f"Wrong math answer: {answers[0]}"
 
 

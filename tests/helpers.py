@@ -262,6 +262,90 @@ def format_failures(failures, limit=5):
     return "\n".join(lines)
 
 
+def get_response(client, model, prompt, provider="openai"):
+    """Send a single prompt and return lowercased response."""
+    return collect_responses(client, model, [prompt], provider)[0]
+
+
+def collect_responses(client, model, prompts, provider="openai"):
+    """
+    Send multiple prompts and collect responses.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        prompts: List of prompt strings
+        provider: "openai" or "anthropic"
+
+    Returns:
+        list of response strings (lowercased)
+    """
+    responses = []
+    for prompt in prompts:
+        if provider == "anthropic":
+            response = call_claude_with_delay(
+                client,
+                model=model,
+                max_tokens=100,
+                temperature=0,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            responses.append(response.content[0].text.lower())
+        else:
+            response = call_with_delay(
+                client,
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+            )
+            responses.append(response.choices[0].message.content.lower())
+    return responses
+
+
+def verify_qa_pairs(client, model, qa_pairs, provider="openai"):
+    """
+    Verify question-answer pairs where expected value should be contained in response.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        qa_pairs: List of (question, expected_answer) tuples
+        provider: "openai" or "anthropic"
+
+    Returns:
+        tuple: (success_rate, failures list)
+    """
+    failures = []
+    for question, expected in qa_pairs:
+        prompt = f"{question} Answer with just the number."
+
+        if provider == "anthropic":
+            response = call_claude_with_delay(
+                client,
+                model=model,
+                max_tokens=10,
+                temperature=0,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            answer = response.content[0].text.strip()
+        else:
+            response = call_with_delay(
+                client,
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+            )
+            answer = response.choices[0].message.content.strip()
+
+        if expected not in answer:
+            failures.append(
+                {"question": question, "expected": expected, "got": answer}
+            )
+
+    success_rate = (len(qa_pairs) - len(failures)) / len(qa_pairs)
+    return success_rate, failures
+
+
 def calculate_cost(input_tokens, output_tokens, model):
     """
     Calculate API cost based on token usage and model pricing.

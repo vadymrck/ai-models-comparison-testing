@@ -1,4 +1,4 @@
-from config import ANTHROPIC_MODEL, OPENAI_MODEL
+from config import ANTHROPIC_MODEL
 from helpers import (
     classify_cases,
     classify_dataset,
@@ -30,24 +30,6 @@ def test_claude_full_metrics(anthropic_client, sentiment_dataset):
     assert (
         result["f1"] > 0.85
     ), f"Claude F1={result['f1']:.3f}\n{format_failures(result['failures'])}"
-
-
-def test_compare_openai_vs_claude(openai_client, anthropic_client, sentiment_dataset):
-    """Direct comparison between OpenAI and Claude models"""
-
-    models = [
-        {"client": openai_client, "name": OPENAI_MODEL, "provider": "openai"},
-        {"client": anthropic_client, "name": ANTHROPIC_MODEL, "provider": "anthropic"},
-    ]
-
-    for model_config in models:
-        result = classify_dataset(
-            model_config["client"],
-            model_config["name"],
-            sentiment_dataset,
-            provider=model_config["provider"],
-        )
-        assert result["f1"] > 0.85, f"{model_config['name']} F1={result['f1']:.3f}"
 
 
 def test_claude_edge_cases(anthropic_client, edge_cases):
