@@ -152,7 +152,7 @@ def classify_cases(client, model, cases, provider="openai"):
     return success_rate, failures
 
 
-def classify_dataset(client, model, dataset, provider="openai"):
+def classify_dataset(client, model, dataset, provider="openai", temperature=0):
     """
     Classify a dataset and return full metrics.
 
@@ -161,6 +161,7 @@ def classify_dataset(client, model, dataset, provider="openai"):
         model: Model name
         dataset: List of dicts with 'text' and 'label' keys
         provider: "openai" or "anthropic"
+        temperature: Temperature setting (0-1)
 
     Returns:
         dict with accuracy, precision, recall, f1, predictions, ground_truth, failures
@@ -170,7 +171,9 @@ def classify_dataset(client, model, dataset, provider="openai"):
     failures = []
 
     for case in dataset:
-        prediction = classify_sentiment(client, model, case["text"], provider=provider)
+        prediction = classify_sentiment(
+            client, model, case["text"], temperature=temperature, provider=provider
+        )
         predictions.append(prediction)
         ground_truth.append(case["label"])
 
@@ -213,6 +216,72 @@ def classify_repeated(client, model, text, runs=5, provider="openai"):
     return [
         classify_sentiment(client, model, text, provider=provider) for _ in range(runs)
     ]
+
+
+def measure_latencies(client, model, dataset, provider="openai"):
+    """
+    Measure classification latency for each item in dataset.
+
+    Args:
+        client: OpenAI or Anthropic client
+        model: Model name
+        dataset: List of dicts with 'text' key
+        provider: "openai" or "anthropic"
+
+    Returns:
+        list of latencies in seconds
+    """
+    import time
+
+    latencies = []
+    for case in dataset:
+        start = time.time()
+        classify_sentiment(client, model, case["text"], provider=provider)
+        latencies.append(time.time() - start)
+    return latencies
+
+
+def classify_batch(client, model, dataset, batch_size=5):
+    """
+    Classify multiple items in a single prompt (batch classification).
+
+    Args:
+        client: OpenAI client
+        model: Model name
+        dataset: List of dicts with 'text' and 'label' keys
+        batch_size: Number of items per batch
+
+    Returns:
+        dict with accuracy, f1, predictions, ground_truth
+    """
+    all_predictions = []
+    all_ground_truth = [case["label"] for case in dataset]
+
+    for i in range(0, len(dataset), batch_size):
+        batch = dataset[i : i + batch_size]
+
+        prompt = "Classify each review as positive, negative, or neutral. Respond with only the labels separated by commas.\n\n"
+        prompt += "\n".join(f"{j}. {case['text']}" for j, case in enumerate(batch, 1))
+        prompt += "\n\nLabels (comma-separated):"
+
+        response = call_with_delay(
+            client,
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+        )
+
+        answer = response.choices[0].message.content.strip().lower()
+        predictions = [normalize_sentiment(p.strip()) for p in answer.split(",")]
+        all_predictions.extend(predictions)
+
+    metrics = compute_metrics(all_predictions, all_ground_truth)
+    return {
+        "accuracy": metrics["accuracy"],
+        "f1": metrics["f1"],
+        "predictions": all_predictions,
+        "ground_truth": all_ground_truth,
+    }
 
 
 def classify_with_tokens(client, model, dataset, provider="openai"):

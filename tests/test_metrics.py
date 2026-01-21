@@ -7,19 +7,16 @@ Classification metrics and performance tests:
 - Edge case and batch processing evaluation
 """
 
-import math
-import time
-
 import pytest
 from config import OPENAI_MODEL, OPENAI_MODEL_COMPARE
 from helpers import (
-    call_with_delay,
+    classify_batch,
     classify_cases,
     classify_dataset,
-    classify_sentiment,
     compute_metrics,
     format_failures,
     map_dataset_to_cases,
+    measure_latencies,
 )
 from sklearn.metrics import precision_recall_fscore_support
 
@@ -67,12 +64,7 @@ def test_per_class_metrics(openai_client, sentiment_dataset):
     assert min_f1 > 0.75, f"Class F1 < 0.75: {min_f1:.3f}\n{class_details}"
 
 
-@pytest.fixture(params=[OPENAI_MODEL, OPENAI_MODEL_COMPARE])
-def model_name(request):
-    """Fixture that provides different model names"""
-    return request.param
-
-
+@pytest.mark.parametrize("model_name", [OPENAI_MODEL, OPENAI_MODEL_COMPARE])
 def test_compare_models(openai_client, sentiment_dataset, model_name):
     """Compare performance across different models"""
 
@@ -80,44 +72,24 @@ def test_compare_models(openai_client, sentiment_dataset, model_name):
     assert result["f1"] > 0.85, f"{model_name} F1={result['f1']:.3f}"
 
 
-@pytest.fixture(params=[0.0, 0.5, 1.0])
-def temperature_value(request):
-    """Fixture that provides different temperature values"""
-    return request.param
-
-
-def test_temperature_impact_on_accuracy(
-    openai_client, sentiment_dataset, temperature_value
-):
+@pytest.mark.parametrize("temperature", [0.0, 0.5, 1.0])
+def test_temperature_impact_on_accuracy(openai_client, sentiment_dataset, temperature):
     """Does temperature affect classification accuracy?"""
 
-    predictions = []
-    ground_truth = []
+    result = classify_dataset(
+        openai_client, OPENAI_MODEL, sentiment_dataset, temperature=temperature
+    )
 
-    for case in sentiment_dataset:
-        prediction = classify_sentiment(
-            openai_client, OPENAI_MODEL, case["text"], temperature=temperature_value
-        )
-        predictions.append(prediction)
-        ground_truth.append(case["label"])
-
-    correct = sum(1 for p, t in zip(predictions, ground_truth) if p == t)
-    accuracy = correct / len(sentiment_dataset)
-
-    min_accuracy = 0.60 if temperature_value > 0.5 else 0.70
-    assert accuracy >= min_accuracy, f"temp={temperature_value}: {accuracy:.1%}"
+    min_accuracy = 0.60 if temperature > 0.5 else 0.70
+    assert (
+        result["accuracy"] >= min_accuracy
+    ), f"temp={temperature}: {result['accuracy']:.1%}"
 
 
 def test_classification_latency(openai_client, sentiment_dataset):
     """Measure average response time for classification"""
 
-    test_cases = sentiment_dataset[:10]
-    latencies = []
-
-    for case in test_cases:
-        start_time = time.time()
-        classify_sentiment(openai_client, OPENAI_MODEL, case["text"])
-        latencies.append(time.time() - start_time)
+    latencies = measure_latencies(openai_client, OPENAI_MODEL, sentiment_dataset[:10])
 
     avg_latency = sum(latencies) / len(latencies)
     max_latency = max(latencies)
@@ -137,41 +109,7 @@ def test_edge_cases(openai_client, edge_cases):
 def test_batch_processing(openai_client, sentiment_dataset):
     """Measure efficiency of batch classification"""
 
-    from helpers import normalize_sentiment
+    result = classify_batch(openai_client, OPENAI_MODEL, sentiment_dataset[:10])
 
-    batch_size = 5
-    test_cases = sentiment_dataset[:10]
-    total_cases = len(test_cases)
-    num_batches = math.ceil(total_cases / batch_size)
-
-    all_predictions = []
-    all_ground_truth = []
-
-    for batch_idx in range(num_batches):
-        batch_start = batch_idx * batch_size
-        batch_end = min((batch_idx + 1) * batch_size, total_cases)
-        batch_cases = test_cases[batch_start:batch_end]
-
-        batch_prompt = "Classify each review as positive, negative, or neutral. Respond with only the labels separated by commas.\n\n"
-        for i, case in enumerate(batch_cases, 1):
-            batch_prompt += f"{i}. {case['text']}\n"
-        batch_prompt += "\nLabels (comma-separated):"
-
-        response = call_with_delay(
-            openai_client,
-            model=OPENAI_MODEL,
-            messages=[{"role": "user", "content": batch_prompt}],
-            temperature=0,
-        )
-
-        answer = response.choices[0].message.content.strip().lower()
-        predicted_labels = [label.strip() for label in answer.split(",")]
-
-        for pred, case in zip(predicted_labels, batch_cases):
-            all_predictions.append(normalize_sentiment(pred))
-            all_ground_truth.append(case["label"])
-
-    metrics = compute_metrics(all_predictions, all_ground_truth)
-
-    assert metrics["accuracy"] > 0.60, f"Batch accuracy: {metrics['accuracy']:.3f}"
-    assert metrics["f1"] > 0.60, f"Batch F1: {metrics['f1']:.3f}"
+    assert result["accuracy"] > 0.60, f"Batch accuracy: {result['accuracy']:.3f}"
+    assert result["f1"] > 0.60, f"Batch F1: {result['f1']:.3f}"
