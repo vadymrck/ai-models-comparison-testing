@@ -407,9 +407,7 @@ def verify_qa_pairs(client, model, qa_pairs, provider="openai"):
             answer = response.choices[0].message.content.strip()
 
         if expected not in answer:
-            failures.append(
-                {"question": question, "expected": expected, "got": answer}
-            )
+            failures.append({"question": question, "expected": expected, "got": answer})
 
     success_rate = (len(qa_pairs) - len(failures)) / len(qa_pairs)
     return success_rate, failures
