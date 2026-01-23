@@ -18,27 +18,38 @@ def normalize_sentiment(prediction: str) -> str:
     return prediction
 
 
+MAX_RETRIES = 5
+
+
 def call_with_delay(client: Any, **kwargs: Any) -> Any:
     """Call OpenAI API with a delay to avoid rate limits."""
-    while True:
+    for attempt in range(MAX_RETRIES):
         try:
             response = client.chat.completions.create(**kwargs)
             time.sleep(0.15)  # 150ms between calls (~400 RPM max)
             return response
         except RateLimitError as e:
-            print(f"\nRate limit hit, retrying in 1s: {e}")
+            if attempt == MAX_RETRIES - 1:
+                raise
+            print(
+                f"\nRate limit hit, retrying in 1s ({attempt + 1}/{MAX_RETRIES}): {e}"
+            )
             time.sleep(1.0)
 
 
 def call_claude_with_delay(client: Any, **kwargs: Any) -> Any:
     """Call Anthropic Claude API with a delay to avoid rate limits."""
-    while True:
+    for attempt in range(MAX_RETRIES):
         try:
             response = client.messages.create(**kwargs)
             time.sleep(0.15)  # 150ms between calls
             return response
         except AnthropicRateLimitError as e:
-            print(f"\nRate limit hit, retrying in 1s: {e}")
+            if attempt == MAX_RETRIES - 1:
+                raise
+            print(
+                f"\nRate limit hit, retrying in 1s ({attempt + 1}/{MAX_RETRIES}): {e}"
+            )
             time.sleep(1.0)
 
 
@@ -137,7 +148,13 @@ def classify_cases(
 
     Returns:
         tuple: (success_rate, failures list)
+
+    Raises:
+        ValueError: If cases is empty
     """
+    if not cases:
+        raise ValueError("No cases provided")
+
     failures = []
     for case in cases:
         prediction = classify_sentiment(client, model, case["text"], provider=provider)

@@ -72,7 +72,8 @@ ai-models-comparison-testing/
 │   ├── helpers.py         # Shared utilities (API calls, metrics)
 │   ├── test_*.py          # Test modules
 ├── data/
-│   └── sentiment_data.json  # Test dataset
+│   ├── sentiment_dataset.json  # Sentiment test dataset
+│   └── edge_cases.json         # Edge case test dataset
 ├── reports/               # Generated test reports
 ├── .env                   # API keys (not committed)
 ├── .pre-commit-config.yaml
