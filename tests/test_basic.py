@@ -36,7 +36,6 @@ def test_temperature_affects_creativity(openai_client):
 
     prompt = "Describe a sunset in exactly 5 words"
 
-    # Low temperature (deterministic)
     response_low = openai_client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
@@ -44,7 +43,6 @@ def test_temperature_affects_creativity(openai_client):
     )
     answer_low = response_low.choices[0].message.content
 
-    # High temperature (creative)
     response_high = openai_client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
@@ -53,18 +51,19 @@ def test_temperature_affects_creativity(openai_client):
     answer_high = response_high.choices[0].message.content
 
     print(f"\n  Temp=0.0: {answer_low}")
-    print(f"   Temp=1.8: {answer_high}")
+    print(f"  Temp=1.8: {answer_high}")
 
-    # They should be different (not guaranteed, but very likely)
     assert len(answer_low) > 0, "Low temp response empty"
     assert len(answer_high) > 0, "High temp response empty"
-    assert answer_low != answer_high, "High and low temperature responses should differ"
+    assert (
+        answer_low != answer_high
+    ), "Responses should differ at different temperatures"
 
 
 def test_max_tokens_limit(openai_client):
     """Model respects token limits"""
 
-    max_tokens = 10  # Very short limit
+    max_tokens = 10
     response = openai_client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": "Write a long story about a dragon"}],
@@ -78,5 +77,4 @@ def test_max_tokens_limit(openai_client):
     print(f"\n  Response: '{answer}'")
     print(f"  Word count: {word_count}")
 
-    # With max_tokens, response should be very brief
     assert word_count < 15, f"Response too long: {word_count} words"
