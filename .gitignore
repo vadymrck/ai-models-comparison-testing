@@ -26,3 +26,7 @@ reports/
 
 # macOS system files
 .DS_Store
+
+# Copilot instructions and Claude notes
+copilot-instructions.md
+CLAUDE.md

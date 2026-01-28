@@ -35,5 +35,5 @@ typing_extensions==4.15.0
 # CI/CD and Testing tools
 pytest-json-report==1.5.0  # Generate JSON test reports
 pytest-timeout==2.2.0      # Add timeouts to tests
-ruff==0.1.15               # Modern Python linter
+ruff==0.14.14              # Modern Python linter
 black==24.1.1              # Code formatter
